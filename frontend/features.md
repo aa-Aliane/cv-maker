@@ -38,9 +38,12 @@ src/features
 │   │   ├── cv-render-engine.tsx
 │   │   └── profile-header.tsx
 │   ├── templates
-│   │   ├── creative.tsx
-│   │   ├── minimalist.tsx
-│   │   └── modern.tsx
+│   │   └── aurora
+│   │       ├── index.tsx
+│   │       ├── layout.module.css
+│   │       ├── main.module.css
+│   │       ├── sidebar.module.css
+│   │       └── tokens.css
 │   └── types.ts
 └── social
     ├── actions.ts
@@ -185,7 +188,7 @@ const EducationItem: React.FC<Props> = ({ edu }) => {
     formState: { errors },
   } = useForm<EducationFormData>({
     resolver: zodResolver(educationSchema),
-    defaultValues: { institution: edu.institution, degree: edu.degree },
+    defaultValues: { institution: edu.institution, degree: edu.degree, note: edu.note },
     mode: "onChange",
   });
 
@@ -247,6 +250,26 @@ const EducationItem: React.FC<Props> = ({ edu }) => {
         {errors.degree && (
           <p className="text-xs text-destructive">{errors.degree.message}</p>
         )}
+      </div>
+
+      {/* Note */}
+      <div className="space-y-1">
+        <label className="text-xs font-semibold text-muted-foreground">Note (e.g. GPA, Honors)</label>
+        <Controller
+          name="note"
+          control={control}
+          render={({ field }) => (
+            <input
+              {...field}
+              type="text"
+              className={inputClass}
+              onChange={(e) => {
+                field.onChange(e);
+                updateEducation(edu.id, { note: e.target.value });
+              }}
+            />
+          )}
+        />
       </div>
     </div>
   );
@@ -762,10 +785,47 @@ export default function PersonalInfoSection() {
           />
         </FieldWrapper>
 
+        <FieldWrapper label="LinkedIn URL" error={errors.linkedin?.message}>
+          <Controller
+            name="linkedin"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="text"
+                placeholder="linkedin.com/in/username"
+                className={inputClass}
+                onChange={(e) => {
+                  field.onChange(e);
+                  updatePersonalInfo({ linkedin: e.target.value });
+                }}
+              />
+            )}
+          />
+        </FieldWrapper>
+
+        <FieldWrapper label="Photo URL" error={errors.photo?.message}>
+          <Controller
+            name="photo"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="text"
+                placeholder="https://example.com/photo.jpg"
+                className={inputClass}
+                onChange={(e) => {
+                  field.onChange(e);
+                  updatePersonalInfo({ photo: e.target.value });
+                }}
+              />
+            )}
+          />
+        </FieldWrapper>
+
         <FieldWrapper
           label="Location"
           error={errors.location?.message}
-          className="sm:col-span-2"
         >
           <Controller
             name="location"
@@ -778,6 +838,28 @@ export default function PersonalInfoSection() {
                 onChange={(e) => {
                   field.onChange(e);
                   updatePersonalInfo({ location: e.target.value });
+                }}
+              />
+            )}
+          />
+        </FieldWrapper>
+
+        <FieldWrapper
+          label="Professional Summary"
+          error={errors.summary?.message}
+          className="sm:col-span-2"
+        >
+          <Controller
+            name="summary"
+            control={control}
+            render={({ field }) => (
+              <textarea
+                {...field}
+                rows={4}
+                className={`${inputClass} resize-none`}
+                onChange={(e) => {
+                  field.onChange(e);
+                  updatePersonalInfo({ summary: e.target.value });
                 }}
               />
             )}
@@ -1023,11 +1105,15 @@ export const personalInfoSchema = z.object({
   email:    z.string().email("Invalid email address"),
   phone:    z.string().optional(),
   location: z.string().optional(),
+  photo:    z.string().optional(),
+  linkedin: z.string().optional(),
+  summary:  z.string().optional(),
 });
 
 export const educationSchema = z.object({
   institution: z.string().min(2, "Institution is required"),
   degree:      z.string().min(2, "Degree is required"),
+  note:        z.string().optional(),
 });
 
 export const experienceSchema = z.object({
@@ -1040,6 +1126,7 @@ export const experienceSchema = z.object({
 
 export const skillSchema = z.object({
   name: z.string().min(1, "Cannot be empty").max(50, "Too long"),
+  level: z.number().min(0).max(100).optional(),
 });
 
 export type PersonalInfoFormData = z.infer<typeof personalInfoSchema>;
@@ -1102,8 +1189,13 @@ export const useCvStore = create<CvStore>((set) => ({
       email: "alex.mercer@example.com",
       phone: "+1 (555) 123-4567",
       location: "San Francisco, CA",
+      photo: "",
+      linkedin: "linkedin.com/in/alexmercer",
+      summary: "Passionate UX Designer with 5+ years of experience...",
+      languages: [{ name: "English", level: "Native" }, { name: "French", level: "Intermediate" }],
+      interests: ["Photography", "Hiking", "Open Source"],
     },
-    education: [{ id: "1", institution: "Design Institute", degree: "BFA" }],
+    education: [{ id: "1", institution: "Design Institute", degree: "BFA", note: "GPA: 3.9/4.0" }],
     skills: ["Figma", "React", "Tailwind"],
     experience: [],
   },
@@ -1255,18 +1347,34 @@ export const useUiStore = create<UiStore>((set) => ({
 ## cv-builder/types.ts
 
 ```ts
+export interface Language {
+  name: string;
+  level: string;
+}
+
+export interface Skill {
+  name: string;
+  level: number;
+}
+
 export interface PersonalInfo {
   fullName: string;
   title: string;
   email: string;
   phone: string;
   location: string;
+  photo?: string;
+  linkedin?: string;
+  summary?: string;
+  languages?: Language[];
+  interests?: string[];
 }
 
 export interface Education {
   id: string;
   institution: string;
   degree: string;
+  note?: string;
 }
 
 export interface WorkExperience {
@@ -1281,7 +1389,7 @@ export interface WorkExperience {
 export interface CvData {
   personalInfo: PersonalInfo;
   education: Education[];
-  skills: string[];
+  skills: (string | Skill)[];
   experience: WorkExperience[];
 }
 
@@ -1307,21 +1415,38 @@ export const generatePdf = async () => {};
 ## cv-viewer/components/cv-render-engine.tsx
 
 ```tsx
-"use client"; // 🚨 Required to consume the client-side Zustand store hook
+"use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { useCvStore } from "@/features/cv-builder/store/cv-builder-store";
-import ModernTemplate from "../templates/modern";
+import AuroraTemplate from "../templates/aurora";
 
 interface Props extends React.ComponentPropsWithoutRef<"section"> {}
 
 const CvRenderEngine: React.FC<Props> = ({ className, ...props }) => {
-  // 1. Snag the live CV content state directly from your store slice
   const cvData = useCvStore((state) => state.cvData);
+  const [scale, setScale] = useState(0.5);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-calculate scale to fit the width on mount/resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth - 48; // padding
+        const targetWidth = 794; // A4 at 96dpi
+        setScale(containerWidth / targetWidth);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <section
+      ref={containerRef}
       className={`w-[480px] bg-muted/30 border-l border-border sticky top-16 h-[calc(100vh-64px)] overflow-y-auto p-6 scrollbar-thin flex flex-col ${className || ""}`}
       {...props}
     >
@@ -1330,19 +1455,33 @@ const CvRenderEngine: React.FC<Props> = ({ className, ...props }) => {
           Live Preview
         </span>
         <div className="flex gap-1.5">
-          <button className="p-1.5 bg-card border border-border rounded text-muted-foreground hover:bg-accent transition-colors shadow-sm">
-            <ZoomIn className="w-4 h-4" />
-          </button>
-          <button className="p-1.5 bg-card border border-border rounded text-muted-foreground hover:bg-accent transition-colors shadow-sm">
+          <button 
+            onClick={() => setScale(s => Math.max(0.1, s - 0.1))}
+            className="p-1.5 bg-card border border-border rounded text-muted-foreground hover:bg-accent transition-colors shadow-sm"
+          >
             <ZoomOut className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => setScale(s => Math.min(2, s + 0.1))}
+            className="p-1.5 bg-card border border-border rounded text-muted-foreground hover:bg-accent transition-colors shadow-sm"
+          >
+            <ZoomIn className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Render Selected A4 CSS Template Shell Content */}
-      <div className="w-full flex justify-center items-start flex-1">
-        {/* 2. Drop the template layout directly into the display slot with live store data */}
-        <ModernTemplate data={cvData} />
+      <div className="w-full flex justify-center items-start flex-1 overflow-visible">
+        <div 
+          style={{ 
+            transform: `scale(${scale})`,
+            transformOrigin: "top center",
+            width: "794px", // Fixed A4 width
+            flexShrink: 0
+          }}
+          className="transition-transform duration-200"
+        >
+          <AuroraTemplate data={cvData} />
+        </div>
       </div>
     </section>
   );
@@ -1363,198 +1502,802 @@ export function ProfileHeader() {
 ```
 
 
-## cv-viewer/templates/creative.tsx
+## cv-viewer/templates/aurora/index.tsx
 
 ```tsx
-export function CreativeTemplate() {
-  return <div>Creative Template</div>;
-}
+"use client";
 
-```
-
-
-## cv-viewer/templates/minimalist.tsx
-
-```tsx
-export function MinimalistTemplate() {
-  return <div>Minimalist Template</div>;
-}
-
-```
-
-
-## cv-viewer/templates/modern.tsx
-
-```tsx
-import { Mail, Phone, MapPin } from "lucide-react";
-import { CvData } from "@/features/cv-builder/types";
 import React from "react";
+import { CvData } from "@/features/cv-builder/types";
 
-interface Props extends React.ComponentPropsWithoutRef<"div"> {
+// ── CSS: tokens first, then layout, then section modules ────────────────
+import "./tokens.css";
+import layout from "./layout.module.css";
+import sidebar from "./sidebar.module.css";
+import main from "./main.module.css";
+
+interface Props {
   data: CvData;
 }
 
-const ModernTemplate: React.FC<Props> = ({ data, className, ...props }) => {
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Split a newline-delimited textarea value into non-empty bullet strings. */
+function toBullets(text?: string): string[] {
+  if (!text) return [];
+  return text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components (flat, no extra files needed at this stage)
+// ---------------------------------------------------------------------------
+
+function SidebarSection({
+  heading,
+  children,
+}: {
+  heading: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={sidebar.section}>
+      <h3 className={sidebar.sectionHeading}>{heading}</h3>
+      {children}
+    </div>
+  );
+}
+
+function MainSection({
+  heading,
+  icon,
+  children,
+}: {
+  heading: string;
+  icon: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={main.section}>
+      <h3 className={main.sectionHeading}>
+        <span className={`material-symbols-outlined ${main.sectionIcon}`}>
+          {icon}
+        </span>
+        {heading}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Aurora Template
+// ---------------------------------------------------------------------------
+
+const AuroraTemplate: React.FC<Props> = ({ data }) => {
   const { personalInfo, skills, experience, education } = data;
 
   return (
-    <div
-      className={`w-full bg-white shadow-xl border border-slate-200 p-10 flex flex-col text-slate-800 aspect-[1/1.414] text-left ${className || ""}`}
-      {...props}
-    >
-      {/* Profile Document Top Header area */}
-      <div className="border-b-2 border-indigo-600 pb-4 mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
-          {personalInfo?.fullName || "Your Name"}
-        </h1>
-        <p className="text-indigo-600 font-bold text-xs uppercase tracking-widest mt-1">
-          {personalInfo?.title || "Professional Title"}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-slate-500 font-medium">
-          {personalInfo?.email && (
-            <div className="flex items-center gap-1">
-              <Mail className="w-3 h-3 text-slate-400" /> {personalInfo.email}
-            </div>
-          )}
-          {personalInfo?.phone && (
-            <div className="flex items-center gap-1">
-              <Phone className="w-3 h-3 text-slate-400" /> {personalInfo.phone}
-            </div>
-          )}
-          {personalInfo?.location && (
-            <div className="flex items-center gap-1">
-              <MapPin className="w-3 h-3 text-slate-400" />{" "}
-              {personalInfo.location}
-            </div>
+    <div className={`aurora-root ${layout.canvas}`}>
+      {/* ── LEFT SIDEBAR ──────────────────────────────────────────────── */}
+      <aside className={layout.sidebar}>
+        {/* Profile photo */}
+        <div className={sidebar.photoWrap}>
+          {personalInfo.photo ? (
+            <img
+              src={personalInfo.photo}
+              alt={`${personalInfo.fullName} profile`}
+              className={sidebar.photo}
+            />
+          ) : (
+            <div className={sidebar.photoPlaceholder}>Photo</div>
           )}
         </div>
-      </div>
 
-      {/* Two-Column Core Layout Body */}
-      <div className="grid grid-cols-3 gap-6 flex-1 items-start">
-        {/* LEFT COLUMN: Experience & Education (Takes up 2/3 width) */}
-        <div className="col-span-2 space-y-6">
-          {/* Experience Section */}
-          <div className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-900 flex items-center gap-2">
-              Professional Experience
-              <div className="flex-1 h-[1px] bg-slate-200" />
-            </h2>
+        {/* Contact */}
+        <SidebarSection heading="Contact">
+          <ul className={sidebar.contactList}>
+            {personalInfo.phone && (
+              <li className={sidebar.contactItem}>
+                <span
+                  className={`material-symbols-outlined ${sidebar.contactIcon}`}
+                >
+                  call
+                </span>
+                {personalInfo.phone}
+              </li>
+            )}
+            {personalInfo.email && (
+              <li className={sidebar.contactItem}>
+                <span
+                  className={`material-symbols-outlined ${sidebar.contactIcon}`}
+                >
+                  mail
+                </span>
+                {personalInfo.email}
+              </li>
+            )}
+            {personalInfo.location && (
+              <li className={sidebar.contactItem}>
+                <span
+                  className={`material-symbols-outlined ${sidebar.contactIcon}`}
+                >
+                  location_on
+                </span>
+                {personalInfo.location}
+              </li>
+            )}
+            {personalInfo.linkedin && (
+              <li className={sidebar.contactItem}>
+                <span
+                  className={`material-symbols-outlined ${sidebar.contactIcon}`}
+                >
+                  link
+                </span>
+                {personalInfo.linkedin}
+              </li>
+            )}
+          </ul>
+        </SidebarSection>
 
-            <div className="space-y-4">
-              {experience && experience.length > 0 ? (
-                experience.map((exp) => {
-                  // Split textarea string lines into separate bullet points safely
-                  const bulletPoints = exp.responsibilities
-                    ? exp.responsibilities
-                        .split("\n")
-                        .filter((p) => p.trim() !== "")
-                    : [];
-
-                  return (
-                    <div key={exp.id} className="space-y-1.5">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-bold text-xs text-slate-900">
-                            {exp.company}
-                          </h3>
-                          <p className="text-[11px] text-slate-500 italic">
-                            {exp.role}
-                          </p>
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">
-                          {exp.startDate} — {exp.endDate || "Present"}
-                        </span>
-                      </div>
-
-                      {bulletPoints.length > 0 && (
-                        <ul className="text-[11px] space-y-1 text-slate-600 list-disc pl-4 leading-relaxed">
-                          {bulletPoints.map((point, index) => (
-                            <li key={index}>{point}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="text-[11px] text-slate-400 italic">
-                  No experience added yet.
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Education Section */}
-          <div className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-900 flex items-center gap-2">
-              Education
-              <div className="flex-1 h-[1px] bg-slate-200" />
-            </h2>
-
-            <div className="space-y-3">
-              {education && education.length > 0 ? (
-                education.map((edu) => (
-                  <div
-                    key={edu.id}
-                    className="flex justify-between items-start"
-                  >
-                    <div>
-                      <h3 className="font-bold text-xs text-slate-900">
-                        {edu.institution}
-                      </h3>
-                      <p className="text-[11px] text-slate-500">{edu.degree}</p>
+        {/* Skills */}
+        {skills && skills.length > 0 && (
+          <SidebarSection heading="Skills">
+            <div className={sidebar.skillList}>
+              {skills.map((skill) =>
+                typeof skill === "string" ? (
+                  /* Plain string skill — render as tag */
+                  <div key={skill} className={sidebar.skillItem}>
+                    <div className={sidebar.skillMeta}>
+                      <span>{skill}</span>
                     </div>
                   </div>
-                ))
-              ) : (
-                <p className="text-[11px] text-slate-400 italic">
-                  No education history added yet.
-                </p>
+                ) : (
+                  /* Skill object with level — render with progress bar */
+                  <div key={(skill as any).name} className={sidebar.skillItem}>
+                    <div className={sidebar.skillMeta}>
+                      <span>{(skill as any).name}</span>
+                      <span className={sidebar.skillPercent}>
+                        {(skill as any).level}%
+                      </span>
+                    </div>
+                    <div className={sidebar.skillTrack}>
+                      <div
+                        className={sidebar.skillFill}
+                        style={{ width: `${(skill as any).level}%` }}
+                      />
+                    </div>
+                  </div>
+                ),
               )}
             </div>
-          </div>
-        </div>
+          </SidebarSection>
+        )}
 
-        {/* RIGHT COLUMN: Skills Sidebar (Takes up 1/3 width) */}
-        <div className="col-span-1 space-y-6">
-          <div className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-900 flex items-center gap-2">
-              Skills
-              <div className="flex-1 h-[1px] bg-slate-200" />
-            </h2>
+        {/* Languages */}
+        {personalInfo.languages && personalInfo.languages.length > 0 && (
+          <SidebarSection heading="Languages">
+            <ul className={sidebar.langList}>
+              {personalInfo.languages.map((lang: any) => (
+                <li key={lang.name ?? lang} className={sidebar.langItem}>
+                  <span className={sidebar.langName}>{lang.name ?? lang}</span>
+                  {lang.level && (
+                    <span className={sidebar.langLevel}>{lang.level}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </SidebarSection>
+        )}
 
-            {skills && skills.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {skills.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="text-[10px] font-medium bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200/60"
+        {/* Interests */}
+        {personalInfo.interests && personalInfo.interests.length > 0 && (
+          <SidebarSection heading="Interests">
+            <div className={sidebar.tagCloud}>
+              {personalInfo.interests.map((interest: string) => (
+                <span key={interest} className={sidebar.tag}>
+                  {interest}
+                </span>
+              ))}
+            </div>
+          </SidebarSection>
+        )}
+      </aside>
+
+      {/* ── RIGHT MAIN COLUMN ─────────────────────────────────────────── */}
+      <div className={layout.main}>
+        {/* Header */}
+        <header className={main.header}>
+          <h1 className={main.name}>{personalInfo.fullName || "Your Name"}</h1>
+          <h2 className={main.title}>
+            {personalInfo.title || "Professional Title"}
+          </h2>
+          {personalInfo.summary && (
+            <p className={main.summary}>{personalInfo.summary}</p>
+          )}
+        </header>
+
+        {/* Experience */}
+        <MainSection heading="Professional Experience" icon="work">
+          {experience && experience.length > 0 ? (
+            <div className={main.timeline}>
+              {experience.map((exp, i) => {
+                const bullets = toBullets(exp.responsibilities);
+                return (
+                  <div
+                    key={exp.id}
+                    className={`${main.entry} ${i > 0 ? main.entrySecondary : ""}`}
                   >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[11px] text-slate-400 italic">
-                No skills added yet.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+                    <h4 className={main.entryTitle}>{exp.role}</h4>
+                    <div className={main.entryMeta}>
+                      <span className={main.entryOrg}>{exp.company}</span>
+                      {exp.startDate && (
+                        <>
+                          <span className={main.entrySep}>•</span>
+                          <span className={main.entryDates}>
+                            {exp.startDate} — {exp.endDate || "Present"}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {bullets.length > 0 && (
+                      <ul className={main.bulletList}>
+                        {bullets.map((b, j) => (
+                          <li key={j}>{b}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className={main.empty}>No experience added yet.</p>
+          )}
+        </MainSection>
 
-      {/* Footer Branding Token Tag */}
-      <div className="mt-auto pt-4 border-t border-slate-100 text-right">
-        <span className="text-[8px] uppercase tracking-widest text-slate-400 font-medium">
-          Generated by cv-Builder
-        </span>
+        {/* Education */}
+        <MainSection heading="Education" icon="school">
+          {education && education.length > 0 ? (
+            <div className={main.timeline}>
+              {education.map((edu) => (
+                <div key={edu.id} className={main.eduEntry}>
+                  <h4 className={main.entryTitle}>{edu.degree}</h4>
+                  <div className={main.entryMeta}>
+                    <span className={main.entryOrg}>{edu.institution}</span>
+                  </div>
+                  {(edu as any).note && (
+                    <p className={main.eduNote}>{(edu as any).note}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className={main.empty}>No education added yet.</p>
+          )}
+        </MainSection>
       </div>
     </div>
   );
 };
 
-export default ModernTemplate;
+export default AuroraTemplate;
+
+```
+
+
+## cv-viewer/templates/aurora/layout.module.css
+
+```css
+/**
+ * Aurora — layout.module.css
+ *
+ * Owns the A4 canvas, the two-column split, and the scrollable wrapper.
+ * No colour, typography, or section-level rules live here — only structure.
+ */
+
+/* ── Outer wrapper (the white A4 sheet) ───────────────────────────────── */
+.canvas {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  /* A4: 210 × 297 mm */
+  aspect-ratio: 210 / 297;
+  max-width: 794px;
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  font-family: var(--font-body);
+  color: var(--color-on-surface);
+  /* Prevent any child from leaking out */
+  isolation: isolate;
+}
+
+/* ── Left sidebar (~34 % width) ───────────────────────────────────────── */
+.sidebar {
+  width: 34%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface-tinted);
+  border-right: 1px solid var(--color-border-light);
+  padding: var(--space-10) var(--space-6);
+  overflow: hidden;
+  gap: var(--space-8);
+}
+
+/* ── Right main column (~66 % width) ──────────────────────────────────── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-10) var(--space-8);
+  overflow: hidden;
+  gap: var(--space-8);
+}
+
+```
+
+
+## cv-viewer/templates/aurora/main.module.css
+
+```css
+/**
+ * Aurora — main.module.css
+ *
+ * Styles every section that lives in the right column:
+ *   • header block (name, title, summary)
+ *   • shared section heading + timeline chrome
+ *   • experience entries
+ *   • education entries
+ */
+
+/* ── Header block ─────────────────────────────────────────────────────── */
+.header {
+  border-bottom: 2px solid var(--color-surface-high);
+  padding-bottom: var(--space-5);
+}
+
+.name {
+  font-size: var(--text-display);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+  color: var(--color-on-surface);
+  line-height: var(--leading-tight);
+  margin: 0 0 var(--space-1);
+}
+
+.title {
+  font-size: var(--text-headline);
+  font-weight: var(--weight-medium);
+  color: var(--color-primary);
+  line-height: var(--leading-tight);
+  margin: 0 0 var(--space-3);
+}
+
+.summary {
+  font-size: var(--text-body);
+  color: var(--color-on-surface-muted);
+  line-height: var(--leading-relaxed);
+  max-width: 90%;
+  margin: 0;
+}
+
+/* ── Shared section block ─────────────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ── Section heading ─────────────────────────────────────────────────── */
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-primary);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--color-primary);
+  margin: 0;
+}
+
+.sectionIcon {
+  font-size: 16px;
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 300,
+    "GRAD" 0,
+    "opsz" 20;
+}
+
+/* ── Timeline list ────────────────────────────────────────────────────── */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ── Single timeline entry ────────────────────────────────────────────── */
+.entry {
+  position: relative;
+  padding-left: var(--space-5);
+  border-left: 2px solid var(--color-surface-high);
+}
+
+/* dot on the timeline rail */
+.entry::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-surface);
+}
+
+/* secondary (older) entries get a grey dot */
+.entrySecondary::before {
+  background-color: var(--color-surface-high);
+}
+
+/* ── Entry header (role / company / dates) ────────────────────────────── */
+.entryTitle {
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--color-on-surface);
+  margin: 0 0 var(--space-1);
+  line-height: var(--leading-tight);
+}
+
+.entryMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-body);
+  color: var(--color-on-surface-muted);
+  margin-bottom: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.entryOrg {
+  font-weight: var(--weight-medium);
+}
+
+.entrySep {
+  color: var(--color-on-surface-faint);
+}
+
+.entryDates {
+  color: var(--color-on-surface-faint);
+}
+
+/* ── Bullet list inside an entry ─────────────────────────────────────── */
+.bulletList {
+  list-style: disc;
+  padding-left: var(--space-4);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bulletList li {
+  font-size: var(--text-body);
+  color: var(--color-on-surface-muted);
+  line-height: var(--leading-relaxed);
+}
+
+/* ── Education entry (no bullets) ─────────────────────────────────────── */
+.eduEntry {
+  position: relative;
+  padding-left: var(--space-5);
+  border-left: 2px solid var(--color-surface-high);
+}
+
+.eduEntry::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-high);
+  box-shadow: 0 0 0 3px var(--color-surface);
+}
+
+.eduNote {
+  font-size: var(--text-body);
+  color: var(--color-on-surface-muted);
+  margin: var(--space-1) 0 0;
+  line-height: var(--leading-normal);
+}
+
+/* ── Empty-state placeholder ──────────────────────────────────────────── */
+.empty {
+  font-size: var(--text-body);
+  color: var(--color-on-surface-faint);
+  font-style: italic;
+}
+
+```
+
+
+## cv-viewer/templates/aurora/sidebar.module.css
+
+```css
+/**
+ * Aurora — sidebar.module.css
+ *
+ * Styles every section that lives in the left column:
+ *   • profile photo
+ *   • section headings (shared style via .sectionHeading)
+ *   • contact list
+ *   • skills with progress bars
+ *   • languages
+ *   • interests / hobbies
+ */
+
+/* ── Profile photo ────────────────────────────────────────────────────── */
+.photoWrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.photo {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid var(--color-primary);
+  background-color: var(--color-surface-high);
+  display: block;
+}
+
+.photoPlaceholder {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-high);
+  border: 2px dashed var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-micro);
+  color: var(--color-on-surface-faint);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+/* ── Shared section block ─────────────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Section heading ─────────────────────────────────────────────────── */
+.sectionHeading {
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-primary);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--color-primary);
+  margin: 0;
+}
+
+/* ── Contact list ─────────────────────────────────────────────────────── */
+.contactList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body);
+  color: var(--color-on-surface-muted);
+  line-height: var(--leading-normal);
+}
+
+.contactIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+  color: var(--color-on-surface-faint);
+  /* Material Symbols sizing */
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 300,
+    "GRAD" 0,
+    "opsz" 20;
+}
+
+/* ── Skills ────────────────────────────────────────────────────────────── */
+.skillList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.skillItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.skillMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--text-micro);
+  font-weight: var(--weight-medium);
+  color: var(--color-on-surface);
+  line-height: 1;
+}
+
+.skillPercent {
+  color: var(--color-on-surface-faint);
+  font-weight: var(--weight-regular);
+}
+
+.skillTrack {
+  width: 100%;
+  height: 3px;
+  background-color: var(--color-surface-high);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.skillFill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  /* Width is set inline via style prop */
+}
+
+/* ── Languages ────────────────────────────────────────────────────────── */
+.langList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.langItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
+.langName {
+  font-weight: var(--weight-medium);
+  color: var(--color-on-surface);
+}
+
+.langLevel {
+  font-size: var(--text-micro);
+  color: var(--color-on-surface-faint);
+}
+
+/* ── Interests / Hobbies ──────────────────────────────────────────────── */
+.tagCloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.tag {
+  padding: 2px var(--space-2);
+  background-color: var(--color-surface-low);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-micro);
+  font-weight: var(--weight-medium);
+  color: var(--color-on-surface-muted);
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+```
+
+
+## cv-viewer/templates/aurora/tokens.css
+
+```css
+/**
+ * Aurora — Design tokens
+ *
+ * All colours, spacing, typography, and radii for this theme live here.
+ * Override this file (or swap it for another theme's tokens.css) to change
+ * the entire look of the CV without touching a single component.
+ */
+
+.aurora-root {
+  /* ── Palette ────────────────────────────────────────────── */
+  --color-primary: #3525cd;
+  --color-primary-hover: #2a1db8;
+  --color-primary-subtle: #e2dfff;
+
+  --color-surface: #ffffff;
+  --color-surface-tinted: #f7f9fb; /* sidebar background */
+  --color-surface-low: #f2f4f6;
+  --color-surface-high: #e6e8ea;
+
+  --color-on-surface: #191c1e;
+  --color-on-surface-muted: #464555;
+  --color-on-surface-faint: #777587;
+
+  --color-border: #c7c4d8;
+  --color-border-light: #e0e3e5;
+
+  /* ── Typography ─────────────────────────────────────────── */
+  --font-body: "Inter", system-ui, sans-serif;
+
+  --text-display: clamp(28px, 4vw, 40px);
+  --text-headline: 18px;
+  --text-body-lg: 14px;
+  --text-body: 12px;
+  --text-label: 11px;
+  --text-micro: 10px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --tracking-wide: 0.06em;
+  --tracking-tight: -0.01em;
+
+  /* ── Spacing ─────────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Radii ───────────────────────────────────────────────── */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-full: 999px;
+
+  /* ── Shadows ─────────────────────────────────────────────── */
+  --shadow-card:
+    0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-ring: 0 0 0 3px rgb(53 37 205 / 0.15);
+}
 
 ```
 
