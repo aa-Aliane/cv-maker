@@ -1,0 +1,47 @@
+/**
+ * Aurora — layout.module.css
+ *
+ * Owns the A4 canvas, the two-column split, and the scrollable wrapper.
+ * No colour, typography, or section-level rules live here — only structure.
+ */
+
+/* ── Outer wrapper (the white A4 sheet) ───────────────────────────────── */
+.canvas {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  /* A4: 210 × 297 mm */
+  aspect-ratio: 210 / 297;
+  max-width: 794px;
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  font-family: var(--font-body);
+  color: var(--color-on-surface);
+  /* Prevent any child from leaking out */
+  isolation: isolate;
+}
+
+/* ── Left sidebar (~34 % width) ───────────────────────────────────────── */
+.sidebar {
+  width: 34%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface-tinted);
+  border-right: 1px solid var(--color-border-light);
+  padding: var(--space-10) var(--space-6);
+  overflow: hidden;
+  gap: var(--space-8);
+}
+
+/* ── Right main column (~66 % width) ──────────────────────────────────── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-10) var(--space-8);
+  overflow: hidden;
+  gap: var(--space-8);
+}

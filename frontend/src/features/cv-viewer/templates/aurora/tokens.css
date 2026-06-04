@@ -1,0 +1,69 @@
+/**
+ * Aurora — Design tokens
+ *
+ * All colours, spacing, typography, and radii for this theme live here.
+ * Override this file (or swap it for another theme's tokens.css) to change
+ * the entire look of the CV without touching a single component.
+ */
+
+.aurora-root {
+  /* ── Palette ────────────────────────────────────────────── */
+  --color-primary: #3525cd;
+  --color-primary-hover: #2a1db8;
+  --color-primary-subtle: #e2dfff;
+
+  --color-surface: #ffffff;
+  --color-surface-tinted: #f7f9fb; /* sidebar background */
+  --color-surface-low: #f2f4f6;
+  --color-surface-high: #e6e8ea;
+
+  --color-on-surface: #191c1e;
+  --color-on-surface-muted: #464555;
+  --color-on-surface-faint: #777587;
+
+  --color-border: #c7c4d8;
+  --color-border-light: #e0e3e5;
+
+  /* ── Typography ─────────────────────────────────────────── */
+  --font-body: "Inter", system-ui, sans-serif;
+
+  --text-display: clamp(28px, 4vw, 40px);
+  --text-headline: 18px;
+  --text-body-lg: 14px;
+  --text-body: 12px;
+  --text-label: 11px;
+  --text-micro: 10px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --tracking-wide: 0.06em;
+  --tracking-tight: -0.01em;
+
+  /* ── Spacing ─────────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Radii ───────────────────────────────────────────────── */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-full: 999px;
+
+  /* ── Shadows ─────────────────────────────────────────────── */
+  --shadow-card:
+    0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-ring: 0 0 0 3px rgb(53 37 205 / 0.15);
+}
