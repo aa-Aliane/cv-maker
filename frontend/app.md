@@ -9,6 +9,7 @@ src/app
 ├── (dashboard)
 │   ├── builder
 │   │   └── page.tsx
+│   ├── layout.tsx
 │   └── settings
 │       └── page.tsx
 ├── (public)
@@ -76,6 +77,24 @@ export default function BuilderPage() {
 ```
 
 
+## (dashboard)/layout.tsx
+
+```tsx
+import React from "react";
+import { DashboardShell } from "@/features/dashboard/components/shell";
+
+/** Verified concise layout */
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <DashboardShell>{children}</DashboardShell>;
+}
+
+```
+
+
 ## (dashboard)/settings/page.tsx
 
 ```tsx
@@ -135,8 +154,8 @@ export default function ExplorePage() {
     --primary-foreground: 0 0% 100%;
 
     /* Secondary / muted */
-    --secondary: 210 9% 91%; /* #e6e8ea */
-    --secondary-foreground: 204 9% 11%;
+    --secondary: 224 15% 40%; /* #565e74 */
+    --secondary-foreground: 210 9% 91%; /* #e6e8ea */
 
     --muted: 210 14% 96%; /* #f2f4f6 */
     --muted-foreground: 224 15% 40%; /* #565e74 */
@@ -228,19 +247,39 @@ export default function ExplorePage() {
   }
 }
 
+@layer utilities {
+  .glass-panel {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.98) 100%
+    );
+    backdrop-filter: blur(10px);
+  }
+}
+
 ```
 
 
 ## layout.tsx
 
 ```tsx
+import type { Metadata } from "next";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Geist } from "next/font/google";
+import { Providers } from "@/components/providers";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
+export const metadata: Metadata = {
+  title: "CV Architect",
+  description: "Organize your career data and build professional resumes.",
+  other: {
+    "google-site-verification": "...", // example
+  },
+};
 
 export default function RootLayout({
   children,
@@ -248,15 +287,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
-      <body className={cn("min-h-screen bg-background font-sans antialiased")}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn("font-sans", geist.variable)}
+    >
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+        />
+      </head>
+      <body
+        className={cn("min-h-screen bg-background font-sans antialiased")}
+        suppressHydrationWarning
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <Providers>{children}</Providers>
         </ThemeProvider>
       </body>
     </html>

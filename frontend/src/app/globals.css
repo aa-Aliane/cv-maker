@@ -22,8 +22,8 @@
     --primary-foreground: 0 0% 100%;
 
     /* Secondary / muted */
-    --secondary: 210 9% 91%; /* #e6e8ea */
-    --secondary-foreground: 204 9% 11%;
+    --secondary: 224 15% 40%; /* #565e74 */
+    --secondary-foreground: 210 9% 91%; /* #e6e8ea */
 
     --muted: 210 14% 96%; /* #f2f4f6 */
     --muted-foreground: 224 15% 40%; /* #565e74 */
@@ -117,7 +117,11 @@
 
 @layer utilities {
   .glass-panel {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.98) 100%
+    );
     backdrop-filter: blur(10px);
   }
 }

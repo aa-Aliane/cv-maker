@@ -2,10 +2,12 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
+import { useLoginMutation } from "../queries/use-auth-mutations";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -16,6 +18,12 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const loginMutation = useLoginMutation();
+
+  const isRegistered = searchParams.get("registered") === "true";
 
   const {
     register,
@@ -29,10 +37,18 @@ export function LoginForm() {
     },
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
-    console.log("Login attempt:", data);
-    // Implementation for login logic would go here
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  const onSubmit = (data: LoginFormValues) => {
+    setError(null);
+    loginMutation.mutate(data, {
+      onSuccess: () => {
+        router.push("/builder");
+      },
+      onError: (err: any) => {
+        setError(
+          err.response?.data?.detail || "Invalid email or password. Please try again."
+        );
+      },
+    });
   };
 
   return (
@@ -54,6 +70,18 @@ export function LoginForm() {
             </p>
           </div>
 
+          {/* Messages */}
+          {error && (
+            <div className="mb-md p-sm bg-destructive/10 border border-destructive/20 rounded-DEFAULT text-destructive text-xs">
+              {error}
+            </div>
+          )}
+          {isRegistered && !error && (
+            <div className="mb-md p-sm bg-primary/10 border border-primary/20 rounded-DEFAULT text-primary text-xs font-medium">
+              Account created successfully! Please sign in.
+            </div>
+          )}
+
           {/* Form Elements */}
           <form
             onSubmit={handleSubmit(onSubmit)}
@@ -71,7 +99,8 @@ export function LoginForm() {
                 {...register("email")}
                 className={cn(
                   "w-full bg-surface-container-lowest border border-outline-variant rounded-DEFAULT px-[12px] py-[10px] font-body-md text-body-md outline-none transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary",
-                  errors.email && "border-destructive focus:border-destructive focus:ring-destructive/20"
+                  errors.email &&
+                    "border-destructive focus:border-destructive focus:ring-destructive/20"
                 )}
                 id="email"
                 type="email"
@@ -105,7 +134,8 @@ export function LoginForm() {
                   {...register("password")}
                   className={cn(
                     "w-full bg-surface-container-lowest border border-outline-variant rounded-DEFAULT px-[12px] py-[10px] pr-10 font-body-md text-body-md outline-none transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary",
-                    errors.password && "border-destructive focus:border-destructive focus:ring-destructive/20"
+                    errors.password &&
+                      "border-destructive focus:border-destructive focus:ring-destructive/20"
                   )}
                   id="password"
                   type={showPassword ? "text" : "password"}

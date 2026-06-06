@@ -14,6 +14,7 @@ src/features
 │   ├── components
 │   │   ├── form-wizard
 │   │   │   └── index.tsx
+│   │   ├── header.tsx
 │   │   ├── resume-sections
 │   │   │   ├── education.tsx
 │   │   │   ├── experience.tsx
@@ -45,6 +46,16 @@ src/features
 │   │       ├── sidebar.module.css
 │   │       └── tokens.css
 │   └── types.ts
+├── dashboard
+│   └── components
+│       ├── global-nav-links.tsx
+│       ├── shell.tsx
+│       ├── sidebar-footer.tsx
+│       ├── sidebar-header.tsx
+│       ├── sidebar.tsx
+│       ├── top-bar.tsx
+│       └── ui
+│           └── profile.tsx
 └── social
     ├── actions.ts
     ├── components
@@ -63,8 +74,220 @@ src/features
 ## auth/components/login-form.tsx
 
 ```tsx
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { cn } from "@/lib/utils";
+import { useLoginMutation } from "../queries/use-auth-mutations";
+
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
 export function LoginForm() {
-  return <div>LoginForm Placeholder</div>;
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const loginMutation = useLoginMutation();
+
+  const isRegistered = searchParams.get("registered") === "true";
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = (data: LoginFormValues) => {
+    setError(null);
+    loginMutation.mutate(data, {
+      onSuccess: () => {
+        router.push("/builder");
+      },
+      onError: (err: any) => {
+        setError(
+          err.response?.data?.detail || "Invalid email or password. Please try again."
+        );
+      },
+    });
+  };
+
+  return (
+    <div className="bg-background min-h-screen flex items-center justify-center p-md">
+      <main className="w-full max-w-[420px] mx-auto relative z-10">
+        <div className="glass-panel border border-outline-variant rounded-xl p-lg md:p-[32px] w-full">
+          {/* Header */}
+          <div className="text-center mb-lg">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-surface-container-low border border-outline-variant mb-md">
+              <span className="material-symbols-outlined text-primary text-[28px]">
+                architecture
+              </span>
+            </div>
+            <h1 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-xs">
+              CV Architect
+            </h1>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">
+              Sign in to organize your career data.
+            </p>
+          </div>
+
+          {/* Messages */}
+          {error && (
+            <div className="mb-md p-sm bg-destructive/10 border border-destructive/20 rounded-DEFAULT text-destructive text-xs">
+              {error}
+            </div>
+          )}
+          {isRegistered && !error && (
+            <div className="mb-md p-sm bg-primary/10 border border-primary/20 rounded-DEFAULT text-primary text-xs font-medium">
+              Account created successfully! Please sign in.
+            </div>
+          )}
+
+          {/* Form Elements */}
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-md"
+          >
+            {/* Email */}
+            <div className="flex flex-col gap-xs">
+              <label
+                className="font-label-md text-label-md text-on-surface"
+                htmlFor="email"
+              >
+                Email Address
+              </label>
+              <input
+                {...register("email")}
+                className={cn(
+                  "w-full bg-surface-container-lowest border border-outline-variant rounded-DEFAULT px-[12px] py-[10px] font-body-md text-body-md outline-none transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary",
+                  errors.email &&
+                    "border-destructive focus:border-destructive focus:ring-destructive/20"
+                )}
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+              />
+              {errors.email && (
+                <p className="text-xs text-destructive mt-0.5">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div className="flex flex-col gap-xs">
+              <div className="flex items-center justify-between">
+                <label
+                  className="font-label-md text-label-md text-on-surface"
+                  htmlFor="password"
+                >
+                  Password
+                </label>
+                <Link
+                  className="font-label-sm text-label-sm text-primary hover:underline transition-all"
+                  href="#"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  {...register("password")}
+                  className={cn(
+                    "w-full bg-surface-container-lowest border border-outline-variant rounded-DEFAULT px-[12px] py-[10px] pr-10 font-body-md text-body-md outline-none transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary",
+                    errors.password &&
+                      "border-destructive focus:border-destructive focus:ring-destructive/20"
+                  )}
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                />
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors p-1"
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {showPassword ? "visibility" : "visibility_off"}
+                  </span>
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-xs text-destructive mt-0.5">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            {/* Submit */}
+            <button
+              disabled={isSubmitting}
+              className="w-full mt-sm bg-primary text-on-primary font-label-md text-label-md py-[12px] rounded-DEFAULT hover:bg-[#2d1ea6] active:scale-[0.98] transition-all flex items-center justify-center gap-sm disabled:opacity-70 disabled:cursor-not-allowed"
+              type="submit"
+            >
+              {isSubmitting ? "Signing In..." : "Sign In"}
+              <span className="material-symbols-outlined text-[18px]">
+                arrow_forward
+              </span>
+            </button>
+          </form>
+
+          {/* Dividers and Third-Party Oauth Hooks */}
+          <div className="flex items-center gap-sm my-lg">
+            <div className="h-px bg-outline-variant flex-1"></div>
+            <span className="font-body-sm text-body-sm text-on-surface-variant px-sm">
+              Or continue with
+            </span>
+            <div className="h-px bg-outline-variant flex-1"></div>
+          </div>
+
+          <div className="flex flex-col gap-sm">
+            <button
+              className="w-full flex items-center justify-center gap-sm border border-outline-variant rounded-DEFAULT py-[10px] bg-surface-container-lowest text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors active:scale-[0.98]"
+              type="button"
+            >
+              <span className="material-symbols-outlined">account_circle</span>{" "}
+              Google
+            </button>
+            <button
+              className="w-full flex items-center justify-center gap-sm border border-outline-variant rounded-DEFAULT py-[10px] bg-surface-container-lowest text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors active:scale-[0.98]"
+              type="button"
+            >
+              <span className="material-symbols-outlined">work</span> LinkedIn
+            </button>
+          </div>
+
+          {/* Secondary Action */}
+          <div className="mt-lg pt-md border-t border-outline-variant text-center">
+            <p className="font-body-sm text-body-sm text-on-surface-variant">
+              Don't have an account?{" "}
+              <Link
+                className="font-label-md text-label-md text-primary ml-xs hover:underline transition-all"
+                href="/register"
+              >
+                Sign Up
+              </Link>
+            </p>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
 
 ```
@@ -73,8 +296,264 @@ export function LoginForm() {
 ## auth/components/register-form.tsx
 
 ```tsx
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { cn } from "@/lib/utils";
+import { useRegisterMutation } from "../queries/use-auth-mutations";
+
+const registerSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  terms: z.literal(true, {
+    errorMap: () => ({ message: "You must accept the terms and conditions" }),
+  }),
+});
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
+
 export function RegisterForm() {
-  return <div>RegisterForm Placeholder</div>;
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const registerMutation = useRegisterMutation();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      terms: false as any,
+    },
+  });
+
+  const onSubmit = (data: RegisterFormValues) => {
+    setError(null);
+    registerMutation.mutate(
+      {
+        email: data.email,
+        password: data.password,
+      },
+      {
+        onSuccess: () => {
+          // Registration successful, redirect to login
+          router.push("/login?registered=true");
+        },
+        onError: (err: any) => {
+          setError(
+            err.response?.data?.detail || "Registration failed. Please try again."
+          );
+        },
+      }
+    );
+  };
+
+  return (
+    <div className="bg-background text-on-background min-h-screen flex items-center justify-center p-md md:p-lg antialiased selection:bg-primary selection:text-on-primary">
+      <main className="w-full max-w-[440px]">
+        {/* Branding & Header */}
+        <div className="text-center mb-lg">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary-fixed mb-md">
+            <span 
+              className="material-symbols-outlined text-[24px] text-primary" 
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              architecture
+            </span>
+          </div>
+          <h1 className="font-headline-lg text-headline-lg text-on-surface mb-xs tracking-tight">
+            Create an account
+          </h1>
+          <p className="font-body-md text-body-md text-on-surface-variant">
+            Start building your professional resume.
+          </p>
+        </div>
+
+        {/* Registration Card */}
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg md:p-[32px]">
+          {error && (
+            <div className="mb-md p-sm bg-destructive/10 border border-destructive/20 rounded-DEFAULT text-destructive text-xs">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-md">
+            
+            {/* Full Name */}
+            <div className="flex flex-col gap-xs">
+              <label 
+                className="block font-label-md text-label-md text-on-surface" 
+                htmlFor="fullName"
+              >
+                Full Name
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-sm flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-[20px] text-text-outline">
+                    person
+                  </span>
+                </div>
+                <input 
+                  {...register("fullName")}
+                  className={cn(
+                    "block w-full pl-[36px] pr-md py-[10px] bg-surface-container-lowest border border-outline-variant rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-text-outline focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none transition-shadow",
+                    errors.fullName && "border-destructive focus:ring-destructive focus:border-destructive"
+                  )}
+                  id="fullName" 
+                  placeholder="Jane Doe" 
+                  type="text"
+                />
+              </div>
+              {errors.fullName && (
+                <p className="text-xs text-destructive mt-0.5">{errors.fullName.message}</p>
+              )}
+            </div>
+
+            {/* Email Address */}
+            <div className="flex flex-col gap-xs">
+              <label 
+                className="block font-label-md text-label-md text-on-surface" 
+                htmlFor="email"
+              >
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-sm flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-[20px] text-text-outline">
+                    mail
+                  </span>
+                </div>
+                <input 
+                  {...register("email")}
+                  className={cn(
+                    "block w-full pl-[36px] pr-md py-[10px] bg-surface-container-lowest border border-outline-variant rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-text-outline focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none transition-shadow",
+                    errors.email && "border-destructive focus:ring-destructive focus:border-destructive"
+                  )}
+                  id="email" 
+                  placeholder="jane@example.com" 
+                  type="email"
+                />
+              </div>
+              {errors.email && (
+                <p className="text-xs text-destructive mt-0.5">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div className="flex flex-col gap-xs">
+              <label 
+                className="block font-label-md text-label-md text-on-surface" 
+                htmlFor="password"
+              >
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-sm flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-[20px] text-text-outline">
+                    lock
+                  </span>
+                </div>
+                <input 
+                  {...register("password")}
+                  className={cn(
+                    "block w-full pl-[36px] pr-md py-[10px] bg-surface-container-lowest border border-outline-variant rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-text-outline focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none transition-shadow",
+                    errors.password && "border-destructive focus:ring-destructive focus:border-destructive"
+                  )}
+                  id="password" 
+                  placeholder="••••••••" 
+                  type="password"
+                />
+              </div>
+              {errors.password && (
+                <p className="text-xs text-destructive mt-0.5">{errors.password.message}</p>
+              )}
+            </div>
+
+            {/* Terms & Conditions */}
+            <div className="flex flex-col gap-xs mt-xs">
+              <div className="flex items-start gap-sm">
+                <div className="flex items-center h-5">
+                  <input 
+                    {...register("terms")}
+                    className={cn(
+                      "w-4 h-4 rounded-sm border-outline-variant text-primary focus:ring-primary focus:ring-2 bg-surface-container-lowest cursor-pointer transition-colors",
+                      errors.terms && "border-destructive"
+                    )}
+                    id="terms" 
+                    type="checkbox"
+                  />
+                </div>
+                <label className="font-body-sm text-body-sm text-on-surface-variant cursor-pointer" htmlFor="terms">
+                  I agree to the <a className="text-primary hover:underline font-label-md text-label-md inline" href="#">Terms of Service</a> and <a className="text-primary hover:underline font-label-md text-label-md inline" href="#">Privacy Policy</a>.
+                </label>
+              </div>
+              {errors.terms && (
+                <p className="text-xs text-destructive">{errors.terms.message}</p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <button 
+              disabled={isSubmitting}
+              className="w-full mt-sm flex items-center justify-center gap-sm bg-primary hover:bg-[#2c1eb0] active:scale-[0.98] text-on-primary font-label-md text-label-md py-[12px] px-lg rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:opacity-70 disabled:cursor-not-allowed" 
+              type="submit"
+            >
+              {isSubmitting ? "Creating Account..." : "Create Account"}
+              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative flex items-center py-lg my-xs">
+            <div className="flex-grow border-t border-outline-variant"></div>
+            <span className="flex-shrink-0 mx-md font-body-sm text-body-sm text-text-outline">or continue with</span>
+            <div className="flex-grow border-t border-outline-variant"></div>
+          </div>
+
+          {/* Social Logins */}
+          <div className="flex flex-col gap-sm">
+            <button 
+              className="w-full flex items-center justify-center gap-md bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-on-surface font-label-md text-label-md py-[10px] px-md rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-outline-variant active:scale-[0.98]" 
+              type="button"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+              </svg>
+              Google
+            </button>
+            <button 
+              className="w-full flex items-center justify-center gap-md bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-on-surface font-label-md text-label-md py-[10px] px-md rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-outline-variant active:scale-[0.98]" 
+              type="button"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452z" fill="#0A66C2"></path>
+              </svg>
+              LinkedIn
+            </button>
+          </div>
+        </div>
+
+        {/* Footer Link */}
+        <p className="mt-lg text-center font-body-sm text-body-sm text-on-surface-variant">
+          Already have an account? 
+          <Link className="font-label-md text-label-md text-primary hover:underline ml-xs transition-all" href="/login">Sign In</Link>
+        </p>
+      </main>
+    </div>
+  );
 }
 
 ```
@@ -91,7 +570,47 @@ export const useAuth = () => ({});
 ## auth/queries/use-auth-mutations.ts
 
 ```ts
-export const useAuthMutations = () => ({});
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/client";
+
+// 1. Login (The backend sets the cookie automatically)
+export const useLoginMutation = () => {
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const formData = new URLSearchParams();
+      formData.append("username", data.email);
+      formData.append("password", data.password);
+
+      // The response header will contain 'Set-Cookie'
+      return await apiClient.post("/auth/jwt/login", formData, {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
+    },
+  });
+};
+
+// 2. Fetch Current User (To check if logged in)
+export const useCurrentUser = () => {
+  return useQuery({
+    queryKey: ["currentUser"],
+    queryFn: async () => {
+      const { data } = await apiClient.get("/auth/users/me");
+      return data;
+    },
+    retry: false, // Don't retry if user is not logged in (401)
+  });
+};
+
+// 3. Register (Expects JSON)
+export const useRegisterMutation = () => {
+  return useMutation({
+    mutationFn: async (data: { email: string; password: string }) => {
+      // FastAPI-Users expects a JSON body for registration
+      const response = await apiClient.post("/auth/register", data);
+      return response.data;
+    },
+  });
+};
 
 ```
 
@@ -140,6 +659,68 @@ const FormWizard: React.FC<Props> = ({ children, ...props }) => {
 };
 
 export default FormWizard;
+
+```
+
+
+## cv-builder/components/header.tsx
+
+```tsx
+"use client";
+
+import React from "react";
+import { useCvStore } from "@/features/cv-builder/store/cv-builder-store";
+
+export function WorkspaceHeader() {
+  // We can pull the draft status or user data from your existing store if needed later
+  const cvData = useCvStore((state) => state.cvData);
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-30 flex h-[64px] items-center justify-between border-b border-border bg-card px-6 shadow-sm">
+      {/* Left Context: Branding & Status */}
+      <div className="flex items-center gap-4">
+        <h2 className="text-lg font-bold tracking-tight text-primary">
+          Resume Builder
+        </h2>
+        <span className="rounded bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          Draft
+        </span>
+      </div>
+
+      {/* Right Context: Actions */}
+      <div className="flex items-center gap-3">
+        {/* Icon Tools */}
+        <button
+          className="flex items-center justify-center rounded p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          title="Version History"
+        >
+          <span className="material-symbols-outlined text-[20px]">history</span>
+        </button>
+
+        <button
+          className="flex items-center justify-center rounded p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          title="Preview Settings"
+        >
+          <span className="material-symbols-outlined text-[20px]">
+            visibility
+          </span>
+        </button>
+
+        {/* Divider */}
+        <div className="mx-1 h-6 w-px bg-border"></div>
+
+        {/* Primary Actions */}
+        <button className="rounded border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+          Share Link
+        </button>
+
+        <button className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-[0.98]">
+          Export PDF
+        </button>
+      </div>
+    </header>
+  );
+}
 
 ```
 
@@ -2306,6 +2887,322 @@ export default AuroraTemplate;
 
 ```ts
 export type ViewerConfig = any;
+
+```
+
+
+## dashboard/components/global-nav-links.tsx
+
+```tsx
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const navItems = [
+  { href: "/builder", label: "Resumes", icon: "description" },
+  { href: "/analytics", label: "Analytics", icon: "analytics" },
+  { href: "/templates", label: "Templates", icon: "dashboard_customize" },
+  { href: "/settings", label: "Settings", icon: "settings" },
+];
+
+export function GlobalNavLinks() {
+  const pathname = usePathname();
+  const isActive = (path: string) => pathname === path;
+
+  return (
+    <nav className="flex-1 space-y-xs">
+      {navItems.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={`flex items-center gap-md px-md py-sm transition-colors ${
+            isActive(item.href)
+              ? "text-primary font-bold border-r-2 border-primary"
+              : "text-secondary hover:bg-surface-container-high"
+          }`}
+        >
+          <span className="material-symbols-outlined">{item.icon}</span>
+          <span className="font-body-md text-body-md">{item.label} Fdf</span>
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+```
+
+
+## dashboard/components/shell.tsx
+
+```tsx
+"use client";
+
+import React, { useState } from "react";
+import { Sidebar } from "./sidebar";
+import { TopBar } from "./top-bar";
+
+interface Props extends React.ComponentPropsWithoutRef<"div"> {}
+
+export const DashboardShell: React.FC<Props> = ({ children }) => {
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-background text-on-background font-body-md selection:bg-primary-container selection:text-on-primary-container antialiased">
+      <Sidebar
+        isOpen={isMobileNavOpen}
+        onClose={() => setIsMobileNavOpen(false)}
+      />
+
+      <TopBar
+        isMobileNavOpen={isMobileNavOpen}
+        onMenuClick={() => setIsMobileNavOpen(true)}
+      />
+
+      <main className="md:pl-64 pt-16 min-h-screen">{children}</main>
+    </div>
+  );
+};
+
+```
+
+
+## dashboard/components/sidebar-footer.tsx
+
+```tsx
+// src/features/dashboard/components/sidebar-footer.tsx
+import Link from "next/link";
+import { UserProfile } from "./ui/profile"; // Adjust relative path if needed
+
+export function SidebarFooter() {
+  return (
+    <div className="mt-auto pt-lg border-t border-outline-variant">
+      <Link
+        href="/help"
+        className="flex items-center gap-md px-md py-sm text-secondary hover:bg-surface-container-high transition-colors rounded"
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">
+          help
+        </span>
+        <span className="font-body-md text-body-md">Help Center</span>
+      </Link>
+
+      {/* Dynamic Profile Session Layer */}
+      <UserProfile />
+    </div>
+  );
+}
+
+```
+
+
+## dashboard/components/sidebar-header.tsx
+
+```tsx
+import Link from "next/link";
+
+export function SidebarHeader() {
+  return (
+    <div className="mb-xl">
+      <Link href="/dashboard" className="block">
+        <span className="font-headline-md text-headline-md font-bold text-primary">
+          CV Architect
+        </span>
+      </Link>
+      <p className="font-label-sm text-label-sm text-secondary mt-xs">
+        Professional Plan
+      </p>
+    </div>
+  );
+}
+
+```
+
+
+## dashboard/components/sidebar.tsx
+
+```tsx
+import { GlobalNavLinks } from "./global-nav-links";
+import { SidebarHeader } from "./sidebar-header";
+import { SidebarFooter } from "./sidebar-footer";
+
+interface Props extends React.ComponentPropsWithoutRef<"div"> {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const Sidebar: React.FC<Props> = ({ isOpen, onClose }) => {
+  return (
+    <div>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          aria-hidden="true"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        id="main-sidebar"
+        aria-label="Main navigation"
+        className={`
+          h-screen w-64 fixed left-0 top-0
+          bg-background border-r border-outline-variant
+          flex flex-col py-lg px-md z-40
+          transition-transform duration-300
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0
+        `}
+      >
+        <SidebarHeader />
+
+        <button
+          aria-label="Create a new resume"
+          className="mb-lg w-full bg-primary-container text-on-primary text-label-md font-label-md py-md rounded transition-all hover:opacity-90 flex items-center justify-center gap-sm"
+        >
+          <span
+            className="material-symbols-outlined text-[20px]"
+            aria-hidden="true"
+          >
+            add
+          </span>
+          New Resume
+        </button>
+
+        <GlobalNavLinks />
+
+        <SidebarFooter />
+      </aside>
+    </div>
+  );
+};
+
+```
+
+
+## dashboard/components/top-bar.tsx
+
+```tsx
+import React from "react";
+
+interface Props extends React.ComponentPropsWithoutRef<"nav"> {
+  onMenuClick: () => void;
+  isMobileNavOpen: boolean;
+}
+
+export const TopBar: React.FC<Props> = ({ onMenuClick, isMobileNavOpen }) => {
+  return (
+    <nav
+      aria-label="Top toolbar"
+      className="fixed top-0 right-0 left-0 md:left-64 z-30 bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center px-lg h-16"
+    >
+      <div className="flex items-center gap-md">
+        {/* Hamburger — mobile only */}
+        <button
+          aria-label="Open navigation menu"
+          aria-controls="main-sidebar"
+          aria-expanded={isMobileNavOpen}
+          className="p-sm text-on-surface-variant hover:text-primary transition-colors md:hidden"
+          onClick={onMenuClick}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            menu
+          </span>
+        </button>
+
+        <span className="font-headline-md text-headline-md font-bold text-primary">
+          Resume Builder
+        </span>
+
+        <span
+          aria-label="Document status: Draft"
+          className="px-sm py-[2px] bg-surface-container text-secondary text-label-xs font-bold rounded uppercase tracking-wider"
+        >
+          Draft
+        </span>
+      </div>
+
+      <div className="flex items-center gap-md">
+        <button
+          aria-label="View edit history"
+          className="p-sm text-on-surface-variant hover:text-primary transition-colors"
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            history
+          </span>
+        </button>
+
+        <button
+          aria-label="Preview resume"
+          className="p-sm text-on-surface-variant hover:text-primary transition-colors"
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            visibility
+          </span>
+        </button>
+
+        <div
+          className="h-6 w-[1px] bg-outline-variant mx-xs"
+          aria-hidden="true"
+        />
+
+        <button className="px-md py-sm text-secondary border border-outline-variant text-label-md font-label-md rounded hover:bg-surface-container transition-colors">
+          Share Link
+        </button>
+
+        <button className="px-md py-sm bg-primary text-on-primary text-label-md font-label-md rounded hover:opacity-90 transition-all">
+          Export PDF
+        </button>
+      </div>
+    </nav>
+  );
+};
+
+```
+
+
+## dashboard/components/ui/profile.tsx
+
+```tsx
+import { useCurrentUser } from "@/features/auth/queries/use-auth-mutations";
+
+export const UserProfile = () => {
+  // Pull data, loading state, and error state directly from the server query
+  const { data: user, isLoading, isError } = useCurrentUser();
+
+  // Fallbacks for loading states or guest sessions
+  const displayName = user?.fullName || user?.username || "Guest";
+  const userTier = user?.plan || "Standard User";
+
+  if (isError) {
+    // Handle authentication failure gracefully (e.g., fallback UI or redirect trigger)
+    return <div className="text-label-xs text-error">Session Error</div>;
+  }
+
+  return (
+    <button className="flex items-center gap-3 ...">
+      {/* ... Avatar Container ... */}
+
+      <div className="flex flex-col text-left">
+        {isLoading ? (
+          // Skeleton loader to prevent layout shifts while fetching
+          <div className="space-y-1">
+            <div className="h-4 w-24 animate-pulse rounded bg-surface-variant/40" />
+            <div className="h-3 w-16 animate-pulse rounded bg-surface-variant/30" />
+          </div>
+        ) : (
+          <>
+            <span className="text-label-sm font-label-md text-on-surface">
+              {displayName}
+            </span>
+            <span className="text-label-xs text-secondary">{userTier}</span>
+          </>
+        )}
+      </div>
+    </button>
+  );
+};
 
 ```
 

@@ -1,11 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
+import { useRegisterMutation } from "../queries/use-auth-mutations";
 
 const registerSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -19,6 +21,10 @@ const registerSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const registerMutation = useRegisterMutation();
+
   const {
     register,
     handleSubmit,
@@ -33,10 +39,25 @@ export function RegisterForm() {
     },
   });
 
-  const onSubmit = async (data: RegisterFormValues) => {
-    console.log("Registration attempt:", data);
-    // Implementation for registration logic would go here
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  const onSubmit = (data: RegisterFormValues) => {
+    setError(null);
+    registerMutation.mutate(
+      {
+        email: data.email,
+        password: data.password,
+      },
+      {
+        onSuccess: () => {
+          // Registration successful, redirect to login
+          router.push("/login?registered=true");
+        },
+        onError: (err: any) => {
+          setError(
+            err.response?.data?.detail || "Registration failed. Please try again."
+          );
+        },
+      }
+    );
   };
 
   return (
@@ -62,6 +83,12 @@ export function RegisterForm() {
 
         {/* Registration Card */}
         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg md:p-[32px]">
+          {error && (
+            <div className="mb-md p-sm bg-destructive/10 border border-destructive/20 rounded-DEFAULT text-destructive text-xs">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-md">
             
             {/* Full Name */}
