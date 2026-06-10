@@ -48,10 +48,13 @@ frontend
 │   │   ├── theme-toggle.tsx
 │   │   └── ui
 │   │       ├── button.tsx
+│   │       ├── calendar.tsx
 │   │       ├── collapsible.tsx
 │   │       ├── dialog.tsx
 │   │       ├── input.tsx
+│   │       ├── month-picker.tsx
 │   │       ├── navigation-menu.tsx
+│   │       ├── popover.tsx
 │   │       └── tabs.tsx
 │   ├── features
 │   │   ├── auth
@@ -4621,11 +4624,13 @@ export default nextConfig;
         "axios": "^1.17.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "date-fns": "^4.4.0",
         "lucide-react": "^1.17.0",
         "next": "16.2.7",
         "next-themes": "^0.4.6",
         "radix-ui": "^1.4.3",
         "react": "19.2.4",
+        "react-day-picker": "^10.0.1",
         "react-dom": "19.2.4",
         "react-hook-form": "^7.77.0",
         "shadcn": "^4.10.0",
@@ -5266,6 +5271,12 @@ export default nextConfig;
       "engines": {
         "node": ">=14.21.3"
       }
+    },
+    "node_modules/@date-fns/tz": {
+      "version": "1.5.0",
+      "resolved": "https://registry.npmjs.org/@date-fns/tz/-/tz-1.5.0.tgz",
+      "integrity": "sha512-lwYN/vDPeNRULcepoE/LO2Pgx+7/RV+S9ARfbc9lr2DtGkOD7pAiruHvbR1RX3Qyf6ja47EWJDMsNK5vK08DJg==",
+      "license": "MIT"
     },
     "node_modules/@dotenvx/dotenvx": {
       "version": "1.71.0",
@@ -8833,6 +8844,16 @@ export default nextConfig;
         "node": ">= 12"
       }
     },
+    "node_modules/date-fns": {
+      "version": "4.4.0",
+      "resolved": "https://registry.npmjs.org/date-fns/-/date-fns-4.4.0.tgz",
+      "integrity": "sha512-+1UMbeh68lH1SegH83CGWwpb6OHHbpSgr3+s5Eww5M4CAgswBpoWS0AjTOfEJ33HiYKz1hdj/KTFprzXHmq/6w==",
+      "license": "MIT",
+      "funding": {
+        "type": "github",
+        "url": "https://github.com/sponsors/kossnocorp"
+      }
+    },
     "node_modules/debug": {
       "version": "4.4.3",
       "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
@@ -11342,6 +11363,32 @@ export default nextConfig;
         "node": ">=0.10.0"
       }
     },
+    "node_modules/react-day-picker": {
+      "version": "10.0.1",
+      "resolved": "https://registry.npmjs.org/react-day-picker/-/react-day-picker-10.0.1.tgz",
+      "integrity": "sha512-eNh6BlwcYInWaJtRv18mXQ06Ys/H6rdTZAnTaSdOYJuTpwP1JMCHNd1FDRadA+gbeinq+psdULN5Xnowy9mV8w==",
+      "license": "MIT",
+      "dependencies": {
+        "@date-fns/tz": "^1.4.1",
+        "date-fns": "^4.1.0"
+      },
+      "engines": {
+        "node": ">=18"
+      },
+      "funding": {
+        "type": "individual",
+        "url": "https://github.com/sponsors/gpbl"
+      },
+      "peerDependencies": {
+        "@types/react": ">=16.8.0",
+        "react": ">=16.8.0"
+      },
+      "peerDependenciesMeta": {
+        "@types/react": {
+          "optional": true
+        }
+      }
+    },
     "node_modules/react-dom": {
       "version": "19.2.4",
       "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.2.4.tgz",
@@ -12842,11 +12889,13 @@ export default nextConfig;
     "axios": "^1.17.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
     "lucide-react": "^1.17.0",
     "next": "16.2.7",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
     "react": "19.2.4",
+    "react-day-picker": "^10.0.1",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.77.0",
     "shadcn": "^4.10.0",
@@ -12880,7 +12929,7 @@ module.exports = {
     tailwindcss: {},
     autoprefixer: {},
   },
-}
+};
 
 ```
 
@@ -13388,32 +13437,40 @@ export function ThemeToggle() {
 ## src/components/ui/button.tsx
 
 ```tsx
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { Slot } from "radix-ui"
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+        default: "bg-primary text-primary-foreground hover:bg-primary/80",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+        ghost:
+          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+        destructive:
+          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default:
+          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        icon: "size-8",
+        "icon-xs":
+          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm":
+          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
+        "icon-lg": "size-9",
       },
     },
     defaultVariants: {
@@ -13421,26 +13478,261 @@ const buttonVariants = cva(
       size: "default",
     },
   }
-);
+)
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+function Button({
+  className,
+  variant = "default",
+  size = "default",
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }) {
+  const Comp = asChild ? Slot.Root : "button"
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
-    return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    );
-  }
-);
-Button.displayName = "Button";
+  return (
+    <Comp
+      data-slot="button"
+      data-variant={variant}
+      data-size={size}
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
 
-export { Button, buttonVariants };
+export { Button, buttonVariants }
+
+```
+
+
+## src/components/ui/calendar.tsx
+
+```tsx
+"use client"
+
+import * as React from "react"
+import {
+  DayPicker,
+  getDefaultClassNames,
+  type DayButton,
+  type Locale,
+} from "react-day-picker"
+
+import { cn } from "@/lib/utils"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from "lucide-react"
+
+function Calendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  captionLayout = "label",
+  buttonVariant = "ghost",
+  locale,
+  formatters,
+  components,
+  ...props
+}: React.ComponentProps<typeof DayPicker> & {
+  buttonVariant?: React.ComponentProps<typeof Button>["variant"]
+}) {
+  const defaultClassNames = getDefaultClassNames()
+
+  return (
+    <DayPicker
+      showOutsideDays={showOutsideDays}
+      className={cn(
+        "group/calendar bg-background p-2 [--cell-radius:var(--radius-md)] [--cell-size:1.75rem] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent",
+        String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
+        String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
+        className
+      )}
+      captionLayout={captionLayout}
+      locale={locale}
+      formatters={{
+        formatMonthDropdown: (date) =>
+          date.toLocaleString(locale?.code, { month: "short" }),
+        ...formatters,
+      }}
+      classNames={{
+        root: cn("w-fit", defaultClassNames.root),
+        months: cn(
+          "relative flex flex-col gap-4 md:flex-row",
+          defaultClassNames.months
+        ),
+        month: cn("flex w-full flex-col gap-4", defaultClassNames.month),
+        nav: cn(
+          "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
+          defaultClassNames.nav
+        ),
+        button_previous: cn(
+          buttonVariants({ variant: buttonVariant }),
+          "size-(--cell-size) p-0 select-none aria-disabled:opacity-50",
+          defaultClassNames.button_previous
+        ),
+        button_next: cn(
+          buttonVariants({ variant: buttonVariant }),
+          "size-(--cell-size) p-0 select-none aria-disabled:opacity-50",
+          defaultClassNames.button_next
+        ),
+        month_caption: cn(
+          "flex h-(--cell-size) w-full items-center justify-center px-(--cell-size)",
+          defaultClassNames.month_caption
+        ),
+        dropdowns: cn(
+          "flex h-(--cell-size) w-full items-center justify-center gap-1.5 text-sm font-medium",
+          defaultClassNames.dropdowns
+        ),
+        dropdown_root: cn(
+          "relative rounded-(--cell-radius)",
+          defaultClassNames.dropdown_root
+        ),
+        dropdown: cn(
+          "absolute inset-0 bg-popover opacity-0",
+          defaultClassNames.dropdown
+        ),
+        caption_label: cn(
+          "font-medium select-none",
+          captionLayout === "label"
+            ? "text-sm"
+            : "flex items-center gap-1 rounded-(--cell-radius) text-sm [&>svg]:size-3.5 [&>svg]:text-muted-foreground",
+          defaultClassNames.caption_label
+        ),
+        table: "w-full border-collapse",
+        weekdays: cn("flex", defaultClassNames.weekdays),
+        weekday: cn(
+          "flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none",
+          defaultClassNames.weekday
+        ),
+        week: cn("mt-2 flex w-full", defaultClassNames.week),
+        week_number_header: cn(
+          "w-(--cell-size) select-none",
+          defaultClassNames.week_number_header
+        ),
+        week_number: cn(
+          "text-[0.8rem] text-muted-foreground select-none",
+          defaultClassNames.week_number
+        ),
+        day: cn(
+          "group/day relative aspect-square h-full w-full rounded-(--cell-radius) p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-(--cell-radius)",
+          props.showWeekNumber
+            ? "[&:nth-child(2)[data-selected=true]_button]:rounded-l-(--cell-radius)"
+            : "[&:first-child[data-selected=true]_button]:rounded-l-(--cell-radius)",
+          defaultClassNames.day
+        ),
+        range_start: cn(
+          "relative isolate z-0 rounded-l-(--cell-radius) bg-muted after:absolute after:inset-y-0 after:right-0 after:w-4 after:bg-muted",
+          defaultClassNames.range_start
+        ),
+        range_middle: cn("rounded-none", defaultClassNames.range_middle),
+        range_end: cn(
+          "relative isolate z-0 rounded-r-(--cell-radius) bg-muted after:absolute after:inset-y-0 after:left-0 after:w-4 after:bg-muted",
+          defaultClassNames.range_end
+        ),
+        today: cn(
+          "rounded-(--cell-radius) bg-muted text-foreground data-[selected=true]:rounded-none",
+          defaultClassNames.today
+        ),
+        outside: cn(
+          "text-muted-foreground aria-selected:text-muted-foreground",
+          defaultClassNames.outside
+        ),
+        disabled: cn(
+          "text-muted-foreground opacity-50",
+          defaultClassNames.disabled
+        ),
+        hidden: cn("invisible", defaultClassNames.hidden),
+        ...classNames,
+      }}
+      components={{
+        Root: ({ className, rootRef, ...props }) => {
+          return (
+            <div
+              data-slot="calendar"
+              ref={rootRef}
+              className={cn(className)}
+              {...props}
+            />
+          )
+        },
+        Chevron: ({ className, orientation, ...props }) => {
+          if (orientation === "left") {
+            return (
+              <ChevronLeftIcon className={cn("size-4", className)} {...props} />
+            )
+          }
+
+          if (orientation === "right") {
+            return (
+              <ChevronRightIcon className={cn("size-4", className)} {...props} />
+            )
+          }
+
+          return (
+            <ChevronDownIcon className={cn("size-4", className)} {...props} />
+          )
+        },
+        DayButton: ({ ...props }) => (
+          <CalendarDayButton locale={locale} {...props} />
+        ),
+        WeekNumber: ({ children, ...props }) => {
+          return (
+            <td {...props}>
+              <div className="flex size-(--cell-size) items-center justify-center text-center">
+                {children}
+              </div>
+            </td>
+          )
+        },
+        ...components,
+      }}
+      {...props}
+    />
+  )
+}
+
+function CalendarDayButton({
+  className,
+  day,
+  modifiers,
+  locale,
+  ...props
+}: React.ComponentProps<typeof DayButton> & { locale?: Partial<Locale> }) {
+  const defaultClassNames = getDefaultClassNames()
+
+  const ref = React.useRef<HTMLButtonElement>(null)
+  React.useEffect(() => {
+    if (modifiers.focused) ref.current?.focus()
+  }, [modifiers.focused])
+
+  return (
+    <Button
+      ref={ref}
+      variant="ghost"
+      size="icon"
+      data-day={day.date.toLocaleDateString(locale?.code)}
+      data-selected-single={
+        modifiers.selected &&
+        !modifiers.range_start &&
+        !modifiers.range_end &&
+        !modifiers.range_middle
+      }
+      data-range-start={modifiers.range_start}
+      data-range-end={modifiers.range_end}
+      data-range-middle={modifiers.range_middle}
+      className={cn(
+        "relative isolate z-10 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 border-0 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:rounded-(--cell-radius) data-[range-end=true]:rounded-r-(--cell-radius) data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-muted data-[range-middle=true]:text-foreground data-[range-start=true]:rounded-(--cell-radius) data-[range-start=true]:rounded-l-(--cell-radius) data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground dark:hover:text-foreground [&>span]:text-xs [&>span]:opacity-70",
+        defaultClassNames.day,
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Calendar, CalendarDayButton }
 
 ```
 
@@ -13501,6 +13793,75 @@ export function Dialog() {
 export function Input() {
   return <input />;
 }
+
+```
+
+
+## src/components/ui/month-picker.tsx
+
+```tsx
+"use client";
+
+import * as React from "react";
+import { format, parse, setDate } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+interface Props {
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+  className: string;
+}
+
+export const MonthPicker: React.FC<Props> = ({ className, value, onChange, disabled }) => {
+  // Parse string "YYYY-MM" to Date object
+  const date = value ? parse(value, "yyyy-MM", new Date()) : undefined;
+
+  const handleSelect = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      // Set to 1st of month to normalize
+      onChange(format(selectedDate, "yyyy-MM"));
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          disabled={disabled}
+          className={cn(
+            "w-full justify-start text-left font-normal border-border rounded-md bg-background text-body-sm transition-all h-auto py-[8px]",
+            !date && "text-muted-foreground",
+            disabled &&
+              "bg-muted text-muted-foreground/50 cursor-not-allowed hover:bg-muted",
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {date ? format(date, "MMMM yyyy") : <span>Pick a date</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={handleSelect}
+          initialFocus
+          // Optional: hide outside months to keep it cleaner
+          showOutsideDays={false}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 ```
 
@@ -13672,6 +14033,46 @@ export {
   NavigationMenuViewport,
   navigationMenuTriggerStyle,
 }
+
+```
+
+
+## src/components/ui/popover.tsx
+
+```tsx
+"use client"
+
+import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
+
+import { cn } from "@/lib/utils"
+
+const Popover = PopoverPrimitive.Root
+
+const PopoverTrigger = PopoverPrimitive.Trigger
+
+const PopoverAnchor = PopoverPrimitive.Anchor
+
+const PopoverContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
+>(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        className
+      )}
+      {...props}
+    />
+  </PopoverPrimitive.Portal>
+))
+PopoverContent.displayName = PopoverPrimitive.Content.displayName
+
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }
 
 ```
 
@@ -15242,7 +15643,7 @@ export function GlobalNavLinks() {
 import React, { useState } from "react";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
-import { Settings } from "lucide-react";
+
 import { SettingsTabs } from "@/features/settings/components/settings-tabs";
 
 interface Props extends React.ComponentPropsWithoutRef<"div"> {
@@ -15532,125 +15933,281 @@ export const UserProfile = () => {
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useSettingsStore } from "../store/settings-store";
-import { Education } from "@/features/cv-builder/types";
+
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+
+import { MonthPicker } from "@/components/ui/month-picker";
 
 export function AcademicBackgroundCard() {
-  const { educations } = useSettingsStore();
+  const { educations, educationDrafts, addEducation } = useSettingsStore();
+
+  // Combined list of IDs to render
+  const allIds = Array.from(
+    new Set([...educations.map((e) => e.id), ...Object.keys(educationDrafts)]),
+  );
 
   return (
-    <section className="bg-card border border-border rounded-xl p-lg shadow-sm">
-      <div className="flex justify-between items-center mb-lg">
-        <div className="flex items-center gap-md">
-          <span className="material-symbols-outlined text-primary text-[32px]">
-            school
-          </span>
-          <h4 className="text-xl font-bold text-foreground">
-            Academic Background
-          </h4>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-xs text-muted-foreground"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span> Add
-          Education
-        </Button>
-      </div>
-
-      <div className="space-y-lg">
-        {educations?.map((edu: Education) => (
-          <EducationItem key={edu.id} education={edu} />
-        ))}
-        {educations?.length === 0 && (
-          <div className="text-center py-lg text-muted-foreground border-2 border-dashed border-border rounded-xl">
-            No education added yet.
+    <section className="lg:col-span-12">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg">
+        <div className="flex justify-between items-center mb-lg">
+          <div className="flex items-center gap-md">
+            <h5 className="text-xl font-bold text-foreground">
+              Academic Background
+            </h5>
           </div>
-        )}
+          <button
+            onClick={addEducation}
+            className="flex items-center gap-xs bg-primary-container text-on-primary-container px-md py-sm rounded-lg font-label-md text-label-md hover:opacity-90 transition-all"
+          >
+            <span className="material-symbols-outlined">add</span> Add Education
+          </button>
+        </div>
+
+        <div className="space-y-lg">
+          {allIds.map((id) => (
+            <EducationItem key={id} id={id} />
+          ))}
+          {allIds.length === 0 && (
+            <div className="flex flex-col items-center justify-center p-xl bg-primary-container/5 border border-dashed border-primary/20 rounded-xl text-center space-y-md">
+              <div className="space-y-xs">
+                <h5 className="font-headline-md text-primary font-bold">
+                  Your academic journey
+                </h5>
+
+                <p className="font-body-md text-secondary max-w-md mx-auto">
+                  Add your degrees and certifications to showcase your
+                  educational foundation.
+                </p>
+              </div>
+
+              <button
+                onClick={addEducation}
+                className="mt-md inline-flex items-center gap-xs text-primary border-b border-transparent hover:border-current transition-colors"
+              >
+                <span className="material-symbols-outlined">add_circle</span>
+                <span>Add your first education</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
 }
 
-function EducationItem({ education }: { education: Education }) {
-  const updateEducation = useSettingsStore((state) => state.updateEducation);
+function EducationItem({ id }: { id: string }) {
+  const {
+    educations,
+    educationDrafts,
+    expandedEducationIds,
+    updateEducationDraft,
+    confirmEducation,
+    clearEducation,
+    toggleEducation,
+    removeEducation,
+  } = useSettingsStore();
+
+  const confirmed = educations.find((e) => e.id === id);
+  const draft = educationDrafts[id];
+  const isOpen = expandedEducationIds.includes(id);
+
+  // Use draft if editing, otherwise confirmed
+  const displayData = draft || confirmed;
+
+  if (!displayData) return null;
 
   return (
-    <div className="group relative bg-muted/30 border border-border rounded-xl p-md transition-all">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
-        <div className="space-y-xs">
-          <label className="font-label-md text-label-md text-muted-foreground block">
-            Institution
-          </label>
-          <input
-            className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-md transition-all"
-            type="text"
-            value={education.institution}
-            onChange={(e) => updateEducation(education.id, { institution: e.target.value })}
-          />
-        </div>
-        <div className="space-y-xs">
-          <label className="font-label-md text-label-md text-muted-foreground block">
-            Degree
-          </label>
-          <input
-            className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-md transition-all"
-            type="text"
-            value={education.degree}
-            onChange={(e) => updateEducation(education.id, { degree: e.target.value })}
-          />
-        </div>
-        <div className="space-y-xs">
-          <label className="font-label-md text-label-md text-muted-foreground block">
-            Field of Study
-          </label>
-          <input
-            className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-md transition-all"
-            type="text"
-            value={education.field_of_study}
-            onChange={(e) => updateEducation(education.id, { field_of_study: e.target.value })}
-          />
-        </div>
+    <Collapsible
+      open={isOpen}
+      onOpenChange={() => toggleEducation(id)}
+      className="group relative bg-muted/30 border border-border rounded-xl transition-all hover:bg-muted/50 overflow-hidden"
+    >
+      <div className="flex items-center justify-between p-md">
+        <CollapsibleTrigger asChild>
+          <div className="flex-1 flex items-center gap-md cursor-pointer select-none">
+            <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab bg-card border border-border rounded shadow-sm p-1 text-muted-foreground">
+              <span className="material-symbols-outlined text-[16px]">
+                drag_indicator
+              </span>
+            </div>
 
-        <div className="grid grid-cols-2 gap-sm">
-          <div className="space-y-xs">
-            <label className="font-label-md text-label-md text-muted-foreground block">
-              Start Date
-            </label>
-            <input
-              className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-sm transition-all"
-              type="month"
-              value={education.start_date}
-              onChange={(e) => updateEducation(education.id, { start_date: e.target.value })}
-            />
+            <div className="flex flex-col ml-sm">
+              {!isOpen ? (
+                <>
+                  <span className="font-bold text-foreground">
+                    {confirmed?.institution || "Untitled Institution"}
+                  </span>
+                  <span className="text-body-sm text-secondary">
+                    {confirmed?.degree || "Untitled Degree"}
+                    {confirmed?.field_of_study &&
+                      ` • ${confirmed.field_of_study}`}
+                    {confirmed?.start_date && ` • ${confirmed.start_date}`}
+                    {confirmed?.start_date &&
+                      ` - ${confirmed.is_current ? "Present" : confirmed.end_date || "..."}`}
+                  </span>
+                </>
+              ) : (
+                <span className="font-bold text-primary">
+                  {confirmed ? "Edit Education" : "New Education"}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="space-y-xs">
-            <label className="font-label-md text-label-md text-muted-foreground block">
-              End Date
-            </label>
-            <input
-              className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-sm transition-all"
-              type="month"
-              value={education.end_date || ""}
-              onChange={(e) => updateEducation(education.id, { end_date: e.target.value })}
-              disabled={education.is_current}
-            />
-          </div>
-        </div>
+        </CollapsibleTrigger>
 
-        <div className="md:col-span-2 space-y-xs">
-          <label className="font-label-md text-label-md text-muted-foreground block">
-            Description (Optional)
-          </label>
-          <textarea
-            className="w-full px-md py-sm border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-sm transition-all resize-none"
-            rows={2}
-            value={education.description || ""}
-            onChange={(e) => updateEducation(education.id, { description: e.target.value })}
-          />
+        <div className="flex items-center gap-sm">
+          {!isOpen && (
+            <button
+              onClick={() => removeEducation(id)}
+              className="text-destructive hover:bg-destructive/10 p-xs rounded transition-colors"
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                delete_outline
+              </span>
+            </button>
+          )}
+          <CollapsibleTrigger asChild>
+            <button className="p-xs hover:bg-muted rounded transition-colors">
+              <span
+                className={`material-symbols-outlined transition-transform duration-200 ${
+                  isOpen ? "rotate-180" : ""
+                }`}
+              >
+                expand_more
+              </span>
+            </button>
+          </CollapsibleTrigger>
         </div>
       </div>
-    </div>
+
+      <CollapsibleContent className="px-md pb-md">
+        <div className="h-[1px] bg-border/50 mb-md" />
+        <div className="ml-sm grid grid-cols-1 md:grid-cols-2 gap-md">
+          <div className="space-y-xs">
+            <label className="font-label-md text-label-md text-muted-foreground block">
+              Institution
+            </label>
+            <input
+              className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-md transition-all"
+              type="text"
+              value={draft?.institution || ""}
+              onChange={(e) =>
+                updateEducationDraft(id, { institution: e.target.value })
+              }
+            />
+          </div>
+          <div className="space-y-xs">
+            <label className="font-label-md text-label-md text-muted-foreground block">
+              Degree
+            </label>
+            <input
+              className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-md transition-all"
+              type="text"
+              value={draft?.degree || ""}
+              onChange={(e) =>
+                updateEducationDraft(id, { degree: e.target.value })
+              }
+            />
+          </div>
+          <div className="space-y-xs">
+            <label className="font-label-md text-label-md text-muted-foreground block">
+              Field of Study
+            </label>
+            <input
+              className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-md transition-all"
+              type="text"
+              value={draft?.field_of_study || ""}
+              onChange={(e) =>
+                updateEducationDraft(id, {
+                  field_of_study: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-sm">
+            <div className="space-y-xs">
+              <label className="font-label-md text-label-md text-muted-foreground block">
+                Start Date
+              </label>
+              <MonthPicker
+                value={draft?.start_date || ""}
+                onChange={(date) =>
+                  updateEducationDraft(id, { start_date: date })
+                }
+              />
+            </div>
+            <div className="space-y-xs">
+              <label className="font-label-md text-label-md text-muted-foreground block">
+                End Date
+              </label>
+              <MonthPicker
+                disabled={draft?.is_current}
+                value={draft?.end_date || ""}
+                onChange={(date) =>
+                  updateEducationDraft(id, { end_date: date })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-md cursor-pointer">
+              <input
+                type="checkbox"
+                checked={draft?.is_current || false}
+                onChange={(e) =>
+                  updateEducationDraft(id, {
+                    is_current: e.target.checked,
+                  })
+                }
+                className="w-4 h-4 rounded-sm border-border text-primary focus:ring-primary focus:ring-2 bg-background cursor-pointer"
+              />
+              <span className="font-label-md text-label-md text-foreground">
+                Currently studying here
+              </span>
+            </label>
+          </div>
+
+          <div className="md:col-span-2 space-y-xs">
+            <label className="font-label-md text-label-md text-muted-foreground block">
+              Description (Optional)
+            </label>
+            <textarea
+              className="w-full px-md py-sm border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-sm transition-all resize-none"
+              rows={2}
+              value={draft?.description || ""}
+              onChange={(e) =>
+                updateEducationDraft(id, { description: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="md:col-span-2 flex justify-end gap-md mt-sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => clearEducation(id)}
+              className="px-lg"
+            >
+              Clear
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => confirmEducation(id)}
+              className="px-lg"
+            >
+              Confirm
+            </Button>
+          </div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -15666,15 +16223,13 @@ import React from "react";
 import { useSettingsStore } from "../store/settings-store";
 
 export function PersonalIdentityCard() {
-  const { user, profile, setUserField, updateProfileField } = useSettingsStore();
+  const { user, profile, setUserField, updateProfileField } =
+    useSettingsStore();
 
   return (
     <section className="bg-card border border-border rounded-xl p-lg shadow-sm">
       <div className="flex items-center gap-md mb-lg">
-        <span className="material-symbols-outlined text-primary text-[32px]">
-          person
-        </span>
-        <h4 className="text-xl font-bold text-foreground">Personal Identity</h4>
+        <h5 className="text-xl font-bold text-foreground">Personal Identity</h5>
       </div>
 
       <div className="flex flex-col md:flex-row gap-lg">
@@ -15683,8 +16238,8 @@ export function PersonalIdentityCard() {
           <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-muted shadow-inner group">
             <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
               {profile?.picture_url ? (
-                <img 
-                  src={profile.picture_url} 
+                <img
+                  src={profile.picture_url}
                   alt={`${user?.first_name} ${user?.last_name}`}
                   className="w-full h-full object-cover"
                 />
@@ -15763,12 +16318,9 @@ export function ProfessionalDetailsCard() {
   return (
     <section className="bg-card border border-border rounded-xl p-lg shadow-sm">
       <div className="flex items-center gap-md mb-lg">
-        <span className="material-symbols-outlined text-primary text-[32px]">
-          work_outline
-        </span>
-        <h4 className="text-xl font-bold text-foreground">
+        <h5 className="text-xl font-bold text-foreground">
           Professional Details
-        </h4>
+        </h5>
       </div>
 
       <div className="space-y-md">
@@ -15793,7 +16345,9 @@ export function ProfessionalDetailsCard() {
               className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring focus:border-ring outline-none text-body-md transition-all"
               type="tel"
               value={profile?.phone_number || ""}
-              onChange={(e) => updateProfileField("phone_number", e.target.value)}
+              onChange={(e) =>
+                updateProfileField("phone_number", e.target.value)
+              }
             />
           </div>
           <div className="space-y-xs">
@@ -15811,10 +16365,12 @@ export function ProfessionalDetailsCard() {
             <label className="font-label-md text-label-md text-muted-foreground block">
               Driving License
             </label>
-            <select 
+            <select
               className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring focus:border-ring outline-none text-body-md transition-all"
               value={profile?.driving_license || "None"}
-              onChange={(e) => updateProfileField("driving_license", e.target.value)}
+              onChange={(e) =>
+                updateProfileField("driving_license", e.target.value)
+              }
             >
               <option value="Class C (Standard)">Class C (Standard)</option>
               <option value="Class A (Commercial)">Class A (Commercial)</option>
@@ -16019,7 +16575,7 @@ export function SocialPresenceCard() {
         <span className="material-symbols-outlined text-primary text-[32px]">
           public
         </span>
-        <h4 className="text-xl font-bold text-foreground">Social Presence</h4>
+        <h5 className="text-xl font-bold text-foreground">Social Presence</h5>
       </div>
 
       <div className="space-y-lg">
@@ -16091,135 +16647,274 @@ import { Button } from "@/components/ui/button";
 import { useSettingsStore } from "../store/settings-store";
 import { WorkExperience } from "@/features/cv-builder/types";
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+
 export function WorkExperienceCard() {
-  const { experiences } = useSettingsStore();
+  const { experiences, experienceDrafts, addExperience } = useSettingsStore();
+
+  // Combined list of IDs to render
+  const allIds = Array.from(
+    new Set([
+      ...experiences.map((e) => e.id),
+      ...Object.keys(experienceDrafts),
+    ])
+  );
 
   return (
-    <section className="bg-card border border-border rounded-xl p-lg shadow-sm">
-      <div className="flex justify-between items-center mb-lg">
-        <div className="flex items-center gap-md">
-          <span className="material-symbols-outlined text-primary text-[32px]">
-            history_edu
-          </span>
-          <h4 className="text-xl font-bold text-foreground">Work Experience</h4>
-        </div>
-        <Button variant="default" size="sm" className="gap-xs">
-          <span className="material-symbols-outlined text-[18px]">add</span> Add
-          Experience
-        </Button>
-      </div>
-
-      <div className="space-y-lg">
-        {experiences?.map((exp: WorkExperience) => (
-          <ExperienceItem key={exp.id} experience={exp} />
-        ))}
-        {experiences?.length === 0 && (
-          <div className="text-center py-lg text-muted-foreground border-2 border-dashed border-border rounded-xl">
-            No work experience added yet.
+    <section className="lg:col-span-12">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg">
+        <div className="flex justify-between items-center mb-lg">
+          <div className="flex items-center gap-md">
+            <h5 className="text-xl font-bold text-foreground">
+              Work Experience
+            </h5>
           </div>
-        )}
+          <button
+            onClick={addExperience}
+            className="flex items-center gap-xs bg-primary-container text-on-primary-container px-md py-sm rounded-lg font-label-md text-label-md hover:opacity-90 transition-all"
+          >
+            <span className="material-symbols-outlined">add</span> Add
+            Experience
+          </button>
+        </div>
+
+        <div className="space-y-lg">
+          {allIds.map((id) => (
+            <ExperienceItem key={id} id={id} />
+          ))}
+          {allIds.length === 0 && (
+            <div className="flex flex-col items-center justify-center p-xl bg-primary-container/5 border border-dashed border-primary/20 rounded-xl text-center space-y-md">
+              <div className="space-y-xs">
+                <h5 className="font-headline-md text-primary font-bold">
+                  Your professional journey starts here
+                </h5>
+
+                <p className="font-body-md text-secondary max-w-md mx-auto">
+                  Add your first role to begin building your career timeline.
+                  Our architect will help you structure it for maximum impact.
+                </p>
+              </div>
+
+              <button
+                onClick={addExperience}
+                className="mt-md inline-flex items-center gap-xs text-primary border-b border-transparent hover:border-current transition-colors"
+              >
+                <span className="material-symbols-outlined">add_circle</span>
+                <span>Add your first experience</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
 }
 
-function ExperienceItem({ experience }: { experience: WorkExperience }) {
-  const updateExperience = useSettingsStore((state) => state.updateExperience);
+function ExperienceItem({ id }: { id: string }) {
+  const {
+    experiences,
+    experienceDrafts,
+    expandedExperienceIds,
+    updateExperienceDraft,
+    confirmExperience,
+    clearExperience,
+    toggleExperience,
+    removeExperience,
+  } = useSettingsStore();
+
+  const confirmed = experiences.find((e) => e.id === id);
+  const draft = experienceDrafts[id];
+  const isOpen = expandedExperienceIds.includes(id);
+
+  // Use draft if editing, otherwise confirmed
+  const displayData = draft || confirmed;
+
+  if (!displayData) return null;
+
+  const isValid = !!(draft?.company?.trim() && draft?.position?.trim());
 
   return (
-    <div className="group relative bg-muted/30 border border-border rounded-xl p-md transition-all hover:bg-muted/50">
-      <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab bg-card border border-border rounded shadow-sm p-1 text-muted-foreground">
-        <span className="material-symbols-outlined text-[16px]">
-          drag_indicator
-        </span>
+    <Collapsible
+      open={isOpen}
+      onOpenChange={() => toggleExperience(id)}
+      className="group relative bg-muted/30 border border-border rounded-xl transition-all hover:bg-muted/50 overflow-hidden"
+    >
+      <div className="flex items-center justify-between p-md">
+        <CollapsibleTrigger asChild>
+          <div className="flex-1 flex items-center gap-md cursor-pointer select-none">
+            <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab bg-card border border-border rounded shadow-sm p-1 text-muted-foreground">
+              <span className="material-symbols-outlined text-[16px]">
+                drag_indicator
+              </span>
+            </div>
+
+            <div className="flex flex-col ml-sm">
+              {!isOpen ? (
+                <>
+                  <span className="font-bold text-foreground">
+                    {confirmed?.company || "Untitled Company"}
+                  </span>
+                  <span className="text-body-sm text-secondary">
+                    {confirmed?.position || "Untitled Position"}
+                    {confirmed?.start_date && ` • ${confirmed.start_date}`}
+                    {confirmed?.start_date &&
+                      ` - ${confirmed.is_current ? "Present" : confirmed.end_date || "..."}`}
+                  </span>
+                </>
+              ) : (
+                <span className="font-bold text-primary">
+                  {confirmed ? "Edit Experience" : "New Experience"}
+                </span>
+              )}
+            </div>
+          </div>
+        </CollapsibleTrigger>
+
+        <div className="flex items-center gap-sm">
+          {!isOpen && (
+            <button
+              onClick={() => removeExperience(id)}
+              className="text-destructive hover:bg-destructive/10 p-xs rounded transition-colors"
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                delete_outline
+              </span>
+            </button>
+          )}
+          <CollapsibleTrigger asChild>
+            <button className="p-xs hover:bg-muted rounded transition-colors">
+              <span
+                className={`material-symbols-outlined transition-transform duration-200 ${
+                  isOpen ? "rotate-180" : ""
+                }`}
+              >
+                expand_more
+              </span>
+            </button>
+          </CollapsibleTrigger>
+        </div>
       </div>
 
-      <div className="ml-sm grid grid-cols-1 md:grid-cols-2 gap-md">
-        <div className="space-y-xs">
-          <label className="font-label-md text-label-md text-muted-foreground block">
-            Company
-          </label>
-          <input
-            className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-md transition-all"
-            type="text"
-            value={experience.company}
-            onChange={(e) => updateExperience(experience.id, { company: e.target.value })}
-          />
-        </div>
-        <div className="space-y-xs">
-          <label className="font-label-md text-label-md text-muted-foreground block">
-            Position
-          </label>
-          <input
-            className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-md transition-all"
-            type="text"
-            value={experience.position}
-            onChange={(e) => updateExperience(experience.id, { position: e.target.value })}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-sm">
+      <CollapsibleContent className="px-md pb-md">
+        <div className="h-[1px] bg-border/50 mb-md" />
+        <div className="ml-sm grid grid-cols-1 md:grid-cols-2 gap-md">
           <div className="space-y-xs">
             <label className="font-label-md text-label-md text-muted-foreground block">
-              Start Date
+              Company
             </label>
             <input
-              className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-sm transition-all"
-              type="month"
-              value={experience.start_date}
-              onChange={(e) => updateExperience(experience.id, { start_date: e.target.value })}
+              className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-md transition-all"
+              type="text"
+              value={draft?.company || ""}
+              onChange={(e) =>
+                updateExperienceDraft(id, { company: e.target.value })
+              }
             />
           </div>
           <div className="space-y-xs">
             <label className="font-label-md text-label-md text-muted-foreground block">
-              End Date
+              Position
             </label>
             <input
-              className={`w-full px-md py-[8px] border border-border rounded-md outline-none text-body-sm transition-all ${
-                experience.is_current
-                  ? "bg-muted text-muted-foreground/50 cursor-not-allowed"
-                  : "bg-background focus:ring-2 focus:ring-ring"
-              }`}
-              disabled={experience.is_current}
-              type="month"
-              value={experience.end_date || ""}
-              onChange={(e) => updateExperience(experience.id, { end_date: e.target.value })}
+              className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-md transition-all"
+              type="text"
+              value={draft?.position || ""}
+              onChange={(e) =>
+                updateExperienceDraft(id, { position: e.target.value })
+              }
             />
           </div>
-        </div>
 
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-md cursor-pointer">
-            <input
-              type="checkbox"
-              checked={experience.is_current}
-              onChange={(e) => updateExperience(experience.id, { is_current: e.target.checked })}
-              className="w-4 h-4 rounded-sm border-border text-primary focus:ring-primary focus:ring-2 bg-background cursor-pointer"
+          <div className="grid grid-cols-2 gap-sm">
+            <div className="space-y-xs">
+              <label className="font-label-md text-label-md text-muted-foreground block">
+                Start Date
+              </label>
+              <input
+                className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-sm transition-all"
+                type="month"
+                value={draft?.start_date || ""}
+                onChange={(e) =>
+                  updateExperienceDraft(id, { start_date: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-xs">
+              <label className="font-label-md text-label-md text-muted-foreground block">
+                End Date
+              </label>
+              <input
+                className={`w-full px-md py-[8px] border border-border rounded-md outline-none text-body-sm transition-all ${
+                  draft?.is_current
+                    ? "bg-muted text-muted-foreground/50 cursor-not-allowed"
+                    : "bg-background focus:ring-2 focus:ring-ring"
+                }`}
+                disabled={draft?.is_current}
+                type="month"
+                value={draft?.end_date || ""}
+                onChange={(e) =>
+                  updateExperienceDraft(id, { end_date: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-md cursor-pointer">
+              <input
+                type="checkbox"
+                checked={draft?.is_current || false}
+                onChange={(e) =>
+                  updateExperienceDraft(id, { is_current: e.target.checked })
+                }
+                className="w-4 h-4 rounded-sm border-border text-primary focus:ring-primary focus:ring-2 bg-background cursor-pointer"
+              />
+              <span className="font-label-md text-label-md text-foreground">
+                Currently in this role
+              </span>
+            </label>
+          </div>
+
+          <div className="md:col-span-2 space-y-xs">
+            <label className="font-label-md text-label-md text-muted-foreground block">
+              Description
+            </label>
+            <textarea
+              className="w-full px-md py-sm border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-sm transition-all resize-none"
+              rows={3}
+              value={draft?.description || ""}
+              onChange={(e) =>
+                updateExperienceDraft(id, { description: e.target.value })
+              }
             />
-            <span className="font-label-md text-label-md text-foreground">
-              Currently in this role
-            </span>
-          </label>
-          <button className="text-destructive hover:bg-destructive/10 p-xs rounded transition-colors">
-            <span className="material-symbols-outlined text-[20px]">
-              delete_outline
-            </span>
-          </button>
-        </div>
+          </div>
 
-        <div className="md:col-span-2 space-y-xs">
-          <label className="font-label-md text-label-md text-muted-foreground block">
-            Description
-          </label>
-          <textarea
-            className="w-full px-md py-sm border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-sm transition-all resize-none"
-            rows={3}
-            value={experience.description || ""}
-            onChange={(e) => updateExperience(experience.id, { description: e.target.value })}
-          />
+          <div className="md:col-span-2 flex justify-end gap-md mt-sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => clearExperience(id)}
+              className="px-lg"
+            >
+              Clear
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => confirmExperience(id)}
+              disabled={!isValid}
+              className="px-lg"
+            >
+              Confirm
+            </Button>
+          </div>
         </div>
-      </div>
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -16314,7 +17009,12 @@ export const useUpdateExperienceMutation = () => {
 
 ```ts
 import { create } from "zustand";
-import { Education, WorkExperience, PersonalInfo } from "@/features/cv-builder/types";
+import { persist } from "zustand/middleware";
+import {
+  Education,
+  WorkExperience,
+  PersonalInfo,
+} from "@/features/cv-builder/types";
 import { AuthUser } from "@/features/auth/types";
 
 interface SettingsState {
@@ -16324,60 +17024,253 @@ interface SettingsState {
   experiences: WorkExperience[];
   hasChanges: boolean;
 
-  // Actions
+  // Draft & UI State
+  experienceDrafts: Record<string, WorkExperience>;
+  educationDrafts: Record<string, Education>;
+  expandedExperienceIds: string[];
+  expandedEducationIds: string[];
+
+  // Basic Actions
   setUser: (user: Partial<AuthUser>) => void;
   setUserField: (field: keyof AuthUser, value: any) => void;
   setProfile: (profile: Partial<PersonalInfo>) => void;
   updateProfileField: (field: keyof PersonalInfo, value: any) => void;
-  setEducations: (educations: Education[]) => void;
-  updateEducation: (id: string, updates: Partial<Education>) => void;
+
+  // Experience Actions
   setExperiences: (experiences: WorkExperience[]) => void;
-  updateExperience: (id: string, updates: Partial<WorkExperience>) => void;
-  
+  addExperience: () => void;
+  updateExperienceDraft: (id: string, updates: Partial<WorkExperience>) => void;
+  confirmExperience: (id: string) => void;
+  clearExperience: (id: string) => void;
+  toggleExperience: (id: string) => void;
+  removeExperience: (id: string) => void;
+
+  // Education Actions
+  setEducations: (educations: Education[]) => void;
+  addEducation: () => void;
+  updateEducationDraft: (id: string, updates: Partial<Education>) => void;
+  confirmEducation: (id: string) => void;
+  clearEducation: (id: string) => void;
+  toggleEducation: (id: string) => void;
+  removeEducation: (id: string) => void;
+
   discard: () => void;
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
-  user: {},
-  profile: {},
-  educations: [],
-  experiences: [],
-  hasChanges: false,
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set, get) => ({
+      user: {},
+      profile: {},
+      educations: [],
+      experiences: [],
+      hasChanges: false,
 
-  setUser: (user) => set({ user, hasChanges: false }),
-  setUserField: (field, value) =>
-    set((state) => ({
-      user: { ...state.user, [field]: value },
-      hasChanges: true
-    })),
+      experienceDrafts: {},
+      educationDrafts: {},
+      expandedExperienceIds: [],
+      expandedEducationIds: [],
 
-  setProfile: (profile) => set({ profile, hasChanges: false }),
-  updateProfileField: (field, value) => 
-    set((state) => ({ 
-      profile: { ...state.profile, [field]: value },
-      hasChanges: true 
-    })),
+      setUser: (user) => set({ user, hasChanges: false }),
+      setUserField: (field, value) =>
+        set((state) => ({
+          user: { ...state.user, [field]: value },
+          hasChanges: true,
+        })),
 
-  setEducations: (educations) => set({ educations, hasChanges: false }),
-  updateEducation: (id, updates) =>
-    set((state) => ({
-      educations: state.educations.map((edu) => 
-        edu.id === id ? { ...edu, ...updates } : edu
-      ),
-      hasChanges: true,
-    })),
+      setProfile: (profile) => set({ profile, hasChanges: false }),
+      updateProfileField: (field, value) =>
+        set((state) => ({
+          profile: { ...state.profile, [field]: value },
+          hasChanges: true,
+        })),
 
-  setExperiences: (experiences) => set({ experiences, hasChanges: false }),
-  updateExperience: (id, updates) =>
-    set((state) => ({
-      experiences: state.experiences.map((exp) => 
-        exp.id === id ? { ...exp, ...updates } : exp
-      ),
-      hasChanges: true,
-    })),
+      // Experiences
+      setExperiences: (experiences) => set({ experiences, hasChanges: false }),
+      addExperience: () => {
+        const id = crypto.randomUUID();
+        const newExp: WorkExperience = {
+          id,
+          company: "",
+          position: "",
+          start_date: "",
+          is_current: false,
+          description: "",
+        };
+        set((state) => ({
+          experienceDrafts: { ...state.experienceDrafts, [id]: newExp },
+          expandedExperienceIds: [...state.expandedExperienceIds, id],
+        }));
+      },
+      updateExperienceDraft: (id, updates) =>
+        set((state) => ({
+          experienceDrafts: {
+            ...state.experienceDrafts,
+            [id]: { ...state.experienceDrafts[id], ...updates },
+          },
+        })),
+      confirmExperience: (id) => {
+        const draft = get().experienceDrafts[id];
+        if (!draft) return;
+        if (!draft.company?.trim() || !draft.position?.trim()) return;
+        set((state) => {
+          const exists = state.experiences.find((e) => e.id === id);
+          const newExperiences = exists
+            ? state.experiences.map((e) => (e.id === id ? draft : e))
+            : [...state.experiences, draft];
 
-  discard: () => set({ hasChanges: false }),
-}));
+          const { [id]: _, ...remainingDrafts } = state.experienceDrafts;
+          return {
+            experiences: newExperiences,
+            experienceDrafts: remainingDrafts,
+            expandedExperienceIds: state.expandedExperienceIds.filter(
+              (eid) => eid !== id
+            ),
+            hasChanges: true,
+          };
+        });
+      },
+      clearExperience: (id) =>
+        set((state) => {
+          const { [id]: _, ...remainingDrafts } = state.experienceDrafts;
+          return {
+            experienceDrafts: remainingDrafts,
+            expandedExperienceIds: state.expandedExperienceIds.filter(
+              (eid) => eid !== id
+            ),
+          };
+        }),
+      toggleExperience: (id) =>
+        set((state) => {
+          const isExpanded = state.expandedExperienceIds.includes(id);
+          if (isExpanded) {
+            return {
+              expandedExperienceIds: state.expandedExperienceIds.filter(
+                (eid) => eid !== id
+              ),
+            };
+          } else {
+            // Start editing existing
+            const existing = state.experiences.find((e) => e.id === id);
+            return {
+              expandedExperienceIds: [...state.expandedExperienceIds, id],
+              experienceDrafts: {
+                ...state.experienceDrafts,
+                [id]: existing ? { ...existing } : state.experienceDrafts[id],
+              },
+            };
+          }
+        }),
+      removeExperience: (id) =>
+        set((state) => ({
+          experiences: state.experiences.filter((e) => e.id !== id),
+          expandedExperienceIds: state.expandedExperienceIds.filter(
+            (eid) => eid !== id
+          ),
+          hasChanges: true,
+        })),
+
+      // Educations
+      setEducations: (educations) => set({ educations, hasChanges: false }),
+      addEducation: () => {
+        const id = crypto.randomUUID();
+        const newEdu: Education = {
+          id,
+          institution: "",
+          degree: "",
+          field_of_study: "",
+          start_date: "",
+          is_current: false,
+          description: "",
+        };
+        set((state) => ({
+          educationDrafts: { ...state.educationDrafts, [id]: newEdu },
+          expandedEducationIds: [...state.expandedEducationIds, id],
+        }));
+      },
+      updateEducationDraft: (id, updates) =>
+        set((state) => ({
+          educationDrafts: {
+            ...state.educationDrafts,
+            [id]: { ...state.educationDrafts[id], ...updates },
+          },
+        })),
+      confirmEducation: (id) => {
+        const draft = get().educationDrafts[id];
+        if (!draft) return;
+        if (!draft.institution?.trim() || !draft.degree?.trim()) return;
+        set((state) => {
+          const exists = state.educations.find((e) => e.id === id);
+          const newEducations = exists
+            ? state.educations.map((e) => (e.id === id ? draft : e))
+            : [...state.educations, draft];
+
+          const { [id]: _, ...remainingDrafts } = state.educationDrafts;
+          return {
+            educations: newEducations,
+            educationDrafts: remainingDrafts,
+            expandedEducationIds: state.expandedEducationIds.filter(
+              (eid) => eid !== id
+            ),
+            hasChanges: true,
+          };
+        });
+      },
+      clearEducation: (id) =>
+        set((state) => {
+          const { [id]: _, ...remainingDrafts } = state.educationDrafts;
+          return {
+            educationDrafts: remainingDrafts,
+            expandedEducationIds: state.expandedEducationIds.filter(
+              (eid) => eid !== id
+            ),
+          };
+        }),
+      toggleEducation: (id) =>
+        set((state) => {
+          const isExpanded = state.expandedEducationIds.includes(id);
+          if (isExpanded) {
+            return {
+              expandedEducationIds: state.expandedEducationIds.filter(
+                (eid) => eid !== id
+              ),
+            };
+          } else {
+            const existing = state.educations.find((e) => e.id === id);
+            return {
+              expandedEducationIds: [...state.expandedEducationIds, id],
+              educationDrafts: {
+                ...state.educationDrafts,
+                [id]: existing ? { ...existing } : state.educationDrafts[id],
+              },
+            };
+          }
+        }),
+      removeEducation: (id) =>
+        set((state) => ({
+          educations: state.educations.filter((e) => e.id !== id),
+          expandedEducationIds: state.expandedEducationIds.filter(
+            (eid) => eid !== id
+          ),
+          hasChanges: true,
+        })),
+
+      discard: () => set({ hasChanges: false }),
+    }),
+    {
+      name: "cv-settings-storage",
+      partialize: (state) => ({
+        profile: state.profile,
+        educations: state.educations,
+        experiences: state.experiences,
+        experienceDrafts: state.experienceDrafts,
+        educationDrafts: state.educationDrafts,
+        expandedExperienceIds: state.expandedExperienceIds,
+        expandedEducationIds: state.expandedEducationIds,
+      }),
+    }
+  )
+);
 
 ```
 
@@ -16521,6 +17414,7 @@ module.exports = {
       fontSize: {
         "headline-lg": ["32px", { lineHeight: "40px", fontWeight: "700" }],
         "headline-lg-mobile": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+        "headline-md": ["28px", { lineHeight: "36px", fontWeight: "700" }],
         "label-md": ["14px", { lineHeight: "20px", fontWeight: "500" }],
         "label-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }],
         "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
@@ -16543,8 +17437,10 @@ module.exports = {
           DEFAULT: "#3525cd",
           foreground: "#ffffff",
           fixed: "#e2dfff",
+          container: "#e2dfff",
         },
         "on-primary": "#ffffff",
+        "on-primary-container": "#00006e",
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",

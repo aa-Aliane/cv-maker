@@ -93,6 +93,8 @@ function ExperienceItem({ id }: { id: string }) {
 
   if (!displayData) return null;
 
+  const isValid = !!(draft?.company?.trim() && draft?.position?.trim());
+
   return (
     <Collapsible
       open={isOpen}
@@ -262,6 +264,7 @@ function ExperienceItem({ id }: { id: string }) {
               variant="default"
               size="sm"
               onClick={() => confirmExperience(id)}
+              disabled={!isValid}
               className="px-lg"
             >
               Confirm

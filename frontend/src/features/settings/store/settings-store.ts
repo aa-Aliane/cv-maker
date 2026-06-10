@@ -102,6 +102,7 @@ export const useSettingsStore = create<SettingsState>()(
       confirmExperience: (id) => {
         const draft = get().experienceDrafts[id];
         if (!draft) return;
+        if (!draft.company?.trim() || !draft.position?.trim()) return;
         set((state) => {
           const exists = state.experiences.find((e) => e.id === id);
           const newExperiences = exists
@@ -187,6 +188,7 @@ export const useSettingsStore = create<SettingsState>()(
       confirmEducation: (id) => {
         const draft = get().educationDrafts[id];
         if (!draft) return;
+        if (!draft.institution?.trim() || !draft.degree?.trim()) return;
         set((state) => {
           const exists = state.educations.find((e) => e.id === id);
           const newEducations = exists
