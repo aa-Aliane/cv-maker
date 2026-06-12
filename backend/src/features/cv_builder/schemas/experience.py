@@ -1,4 +1,5 @@
 import uuid
+from typing import List
 
 from pydantic import BaseModel
 
@@ -12,6 +13,7 @@ class ExperienceRead(BaseModel):
     end_date: str | None = None
     is_current: bool
     description: str | None = None
+    bullets: List[str] = []
 
     model_config = {"from_attributes": True}
 
@@ -24,6 +26,7 @@ class ExperienceCreate(BaseModel):
     end_date: str | None = None
     is_current: bool = False
     description: str | None = None
+    bullets: List[str] = []
 
 
 class ExperienceUpdate(BaseModel):
@@ -34,3 +37,4 @@ class ExperienceUpdate(BaseModel):
     end_date: str | None = None
     is_current: bool | None = None
     description: str | None = None
+    bullets: List[str] = []

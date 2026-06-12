@@ -11,6 +11,9 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
+import { MonthPicker } from "@/components/ui/month-picker";
+import Bullets from "./work-experience/bullets";
+
 export function WorkExperienceCard() {
   const { experiences, experienceDrafts, addExperience } = useSettingsStore();
 
@@ -19,7 +22,7 @@ export function WorkExperienceCard() {
     new Set([
       ...experiences.map((e) => e.id),
       ...Object.keys(experienceDrafts),
-    ])
+    ]),
   );
 
   return (
@@ -122,6 +125,9 @@ function ExperienceItem({ id }: { id: string }) {
                     {confirmed?.start_date &&
                       ` - ${confirmed.is_current ? "Present" : confirmed.end_date || "..."}`}
                   </span>
+                  {!!confirmed?.bullets?.length && (
+                    <Bullets bullets={confirmed?.bullets} />
+                  )}
                 </>
               ) : (
                 <span className="font-bold text-primary">
@@ -192,12 +198,10 @@ function ExperienceItem({ id }: { id: string }) {
               <label className="font-label-md text-label-md text-muted-foreground block">
                 Start Date
               </label>
-              <input
-                className="w-full px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-sm transition-all"
-                type="month"
+              <MonthPicker
                 value={draft?.start_date || ""}
-                onChange={(e) =>
-                  updateExperienceDraft(id, { start_date: e.target.value })
+                onChange={(date) =>
+                  updateExperienceDraft(id, { start_date: date })
                 }
               />
             </div>
@@ -205,17 +209,11 @@ function ExperienceItem({ id }: { id: string }) {
               <label className="font-label-md text-label-md text-muted-foreground block">
                 End Date
               </label>
-              <input
-                className={`w-full px-md py-[8px] border border-border rounded-md outline-none text-body-sm transition-all ${
-                  draft?.is_current
-                    ? "bg-muted text-muted-foreground/50 cursor-not-allowed"
-                    : "bg-background focus:ring-2 focus:ring-ring"
-                }`}
+              <MonthPicker
                 disabled={draft?.is_current}
-                type="month"
                 value={draft?.end_date || ""}
-                onChange={(e) =>
-                  updateExperienceDraft(id, { end_date: e.target.value })
+                onChange={(date) =>
+                  updateExperienceDraft(id, { end_date: date })
                 }
               />
             </div>
@@ -249,6 +247,58 @@ function ExperienceItem({ id }: { id: string }) {
                 updateExperienceDraft(id, { description: e.target.value })
               }
             />
+
+            <div className="md:col-span-2 space-y-xs">
+              <label className="font-label-md text-label-md text-muted-foreground block">
+                Highlights
+              </label>
+
+              <div className="space-y-sm">
+                {(draft?.bullets || []).map((bullet, index) => (
+                  <div key={index} className="flex items-center gap-sm">
+                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary/50 shrink-0" />
+                    <input
+                      className="flex-1 px-md py-[8px] border border-border rounded-md bg-background focus:ring-2 focus:ring-ring outline-none text-body-sm transition-all"
+                      type="text"
+                      value={bullet}
+                      placeholder="e.g. Led a team of 5 engineers"
+                      onChange={(e) => {
+                        const updated = [...(draft?.bullets || [])];
+                        updated[index] = e.target.value;
+                        updateExperienceDraft(id, { bullets: updated });
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        const updated = (draft?.bullets || []).filter(
+                          (_, i) => i !== index,
+                        );
+                        updateExperienceDraft(id, { bullets: updated });
+                      }}
+                      className="text-muted-foreground hover:text-destructive transition-colors p-xs rounded"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">
+                        close
+                      </span>
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  onClick={() =>
+                    updateExperienceDraft(id, {
+                      bullets: [...(draft?.bullets || []), ""],
+                    })
+                  }
+                  className="flex items-center gap-xs text-sm text-primary hover:opacity-80 transition-opacity mt-xs"
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    add
+                  </span>
+                  Add bullet
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="md:col-span-2 flex justify-end gap-md mt-sm">

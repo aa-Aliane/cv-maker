@@ -7,7 +7,7 @@ const navItems = [
   { href: "/builder", label: "Resumes", icon: "description" },
   { href: "/analytics", label: "Analytics", icon: "analytics" },
   { href: "/templates", label: "Templates", icon: "dashboard_customize" },
-  { href: "/settings", label: "Settings", icon: "settings" },
+  { href: "/settings/profile", label: "Settings", icon: "settings" },
 ];
 
 export function GlobalNavLinks() {

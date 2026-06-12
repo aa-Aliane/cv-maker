@@ -1,6 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/client";
-import { Education, WorkExperience, PersonalInfo } from "@/features/cv-builder/types";
+import {
+  Education,
+  WorkExperience,
+  PersonalInfo,
+} from "@/features/cv-builder/types";
 import { useSettingsStore } from "../store/settings-store";
 
 export const useProfile = () => {
@@ -36,6 +40,32 @@ export const useEducations = () => {
   });
 };
 
+export const useCreateEducationMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (education: Omit<Education, "id">) => {
+      const { data } = await apiClient.post("/cv/education", education);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educations"] });
+    },
+  });
+};
+
+export const useCreateExperienceMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (experience: Omit<WorkExperience, "id">) => {
+      const { data } = await apiClient.post("/cv/experience", experience);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["experiences"] });
+    },
+  });
+};
+
 export const useUpdateProfileMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -53,7 +83,10 @@ export const useUpdateProfileMutation = () => {
 export const useUpdateEducationMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...education }: Partial<Education> & { id: string }) => {
+    mutationFn: async ({
+      id,
+      ...education
+    }: Partial<Education> & { id: string }) => {
       const { data } = await apiClient.patch(`/cv/education/${id}`, education);
       return data;
     },
@@ -66,8 +99,14 @@ export const useUpdateEducationMutation = () => {
 export const useUpdateExperienceMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...experience }: Partial<WorkExperience> & { id: string }) => {
-      const { data } = await apiClient.patch(`/cv/experience/${id}`, experience);
+    mutationFn: async ({
+      id,
+      ...experience
+    }: Partial<WorkExperience> & { id: string }) => {
+      const { data } = await apiClient.patch(
+        `/cv/experience/${id}`,
+        experience,
+      );
       return data;
     },
     onSuccess: () => {

@@ -1,6 +1,7 @@
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
@@ -20,5 +21,8 @@ class Experience(SQLModel, table=True):
     end_date: str | None = Field(default=None, nullable=True)
     is_current: bool = Field(default=False, nullable=False)
     description: str | None = Field(default=None, nullable=True)
+    bullets: List[str] = Field(
+        default=[], sa_column=Column(JSON, nullable=False, server_default="[]")
+    )
 
     user: "User" = Relationship(back_populates="experiences")

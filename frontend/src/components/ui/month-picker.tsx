@@ -2,7 +2,11 @@
 
 import * as React from "react";
 import { format, parse, getYear, setYear, getMonth, setMonth } from "date-fns";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,8 +23,18 @@ interface Props {
 }
 
 const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 export const MonthPicker: React.FC<Props> = ({
@@ -30,10 +44,10 @@ export const MonthPicker: React.FC<Props> = ({
   disabled,
 }) => {
   const [open, setOpen] = React.useState(false);
-  
+
   // Parse string "YYYY-MM" to Date object, default to now
   const date = value ? parse(value, "yyyy-MM", new Date()) : new Date();
-  
+
   // Local state for the year we are currently viewing in the picker
   const [viewYear, setViewYear] = React.useState(getYear(date));
 
@@ -43,8 +57,8 @@ export const MonthPicker: React.FC<Props> = ({
     setOpen(false);
   };
 
-  const handlePrevYear = () => setViewYear(prev => prev - 1);
-  const handleNextYear = () => setViewYear(prev => prev + 1);
+  const handlePrevYear = () => setViewYear((prev) => prev - 1);
+  const handleNextYear = () => setViewYear((prev) => prev + 1);
 
   return (
     <div className={cn("w-full", className)}>
@@ -64,35 +78,31 @@ export const MonthPicker: React.FC<Props> = ({
             {value ? format(date, "MMMM yyyy") : <span>Pick a date</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent
-          className="w-[280px] p-3"
-          align="start"
-        >
+        <PopoverContent className="w-[280px] p-3" align="start">
           <div className="flex items-center justify-between mb-4 px-1">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="h-7 w-7" 
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7"
               onClick={handlePrevYear}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="font-medium text-sm">
-              {viewYear}
-            </div>
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="h-7 w-7" 
+            <div className="font-medium text-sm">{viewYear}</div>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7"
               onClick={handleNextYear}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-2">
             {MONTHS.map((month, index) => {
-              const isSelected = value && getMonth(date) === index && getYear(date) === viewYear;
+              const isSelected =
+                value && getMonth(date) === index && getYear(date) === viewYear;
               return (
                 <Button
                   key={month}
@@ -100,7 +110,8 @@ export const MonthPicker: React.FC<Props> = ({
                   size="sm"
                   className={cn(
                     "h-9 w-full font-normal",
-                    isSelected && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                    isSelected &&
+                      "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
                   )}
                   onClick={() => handleMonthSelect(index)}
                 >

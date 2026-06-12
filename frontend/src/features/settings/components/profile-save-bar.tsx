@@ -1,12 +1,6 @@
 "use client";
 
-import React from "react";
 import { Button } from "@/components/ui/button";
-import { PersonalIdentityCard } from "./personal-identity-card";
-import { ProfessionalDetailsCard } from "./professional-details-card";
-import { SocialPresenceCard } from "./social-presence-card";
-import { WorkExperienceCard } from "./work-experience-card";
-import { AcademicBackgroundCard } from "./academic-background-card";
 import {
   useProfile,
   useEducations,
@@ -25,8 +19,9 @@ import { useSettingsStore } from "../store/settings-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { Education, WorkExperience } from "@/features/cv-builder/types";
 
-export function ProfileSettings() {
-  // Queries now handle store synchronization via side effects in queryFn
+export function ProfileSaveBar() {
+  const queryClient = useQueryClient();
+
   const { refetch: refetchUser } = useCurrentUser();
   const { refetch: refetchProfile } = useProfile();
   const { refetch: refetchEducations } = useEducations();
@@ -42,7 +37,11 @@ export function ProfileSettings() {
   const createEducation = useCreateEducationMutation();
   const createExperience = useCreateExperienceMutation();
 
-  const queryClient = useQueryClient();
+  const isSaving =
+    updateProfile.isPending ||
+    updateUser.isPending ||
+    updateEducation.isPending ||
+    updateExperience.isPending;
 
   const handleSave = async () => {
     try {
@@ -55,7 +54,6 @@ export function ProfileSettings() {
       const cachedEducations =
         queryClient.getQueryData<Education[]>(["educations"]) ?? [];
       const existingEducationIds = new Set(cachedEducations.map((e) => e?.id));
-
       for (const { id, ...fields } of educations) {
         if (id && existingEducationIds.has(id)) {
           await updateEducation.mutateAsync({ id, ...fields });
@@ -69,7 +67,6 @@ export function ProfileSettings() {
       const existingExperienceIds = new Set(
         cachedExperiences.map((e) => e?.id),
       );
-
       for (const { id, ...fields } of experiences) {
         if (id && existingExperienceIds.has(id)) {
           await updateExperience.mutateAsync({ id, ...fields });
@@ -79,14 +76,12 @@ export function ProfileSettings() {
       }
 
       discard();
-      alert("Profile updated successfully!");
     } catch (error) {
       console.error("Failed to save changes:", error);
-      alert("Failed to save changes. Please try again.");
     }
   };
+
   const handleDiscard = async () => {
-    // Re-fetching data will trigger the side effects in queryFn and reset the store
     await Promise.all([
       refetchUser(),
       refetchProfile(),
@@ -97,55 +92,23 @@ export function ProfileSettings() {
   };
 
   return (
-    <div className="relative flex flex-col min-h-[calc(100vh-64px)] w-full">
-      {/* Profile Content */}
-      <div className="p-lg max-w-5xl mx-auto w-full animate-in fade-in duration-500 pb-[100px] outline-none">
-        <div className="mb-lg">
-          <h3 className="text-2xl font-bold text-foreground">
-            Profile Management
-          </h3>
-          <p className="font-body-md text-body-md text-muted-foreground mt-xs">
-            Manage your professional identity and career history across the
-            platform.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-lg">
-          <div className="lg:col-span-8 space-y-lg">
-            <PersonalIdentityCard />
-            <ProfessionalDetailsCard />
-          </div>
-          <div className="lg:col-span-4">
-            <SocialPresenceCard />
-          </div>
-          <div className="lg:col-span-12 space-y-lg">
-            <WorkExperienceCard />
-            <AcademicBackgroundCard />
-          </div>
-        </div>
-      </div>
-
-      {/* Sticky Bottom Actions */}
-      <div className="fixed bottom-0 right-0 left-0 md:left-64 bg-background/80 backdrop-blur-md border-t border-border p-md flex justify-end gap-md z-30 px-lg">
-        <Button
-          variant="ghost"
-          className="font-label-md"
-          onClick={handleDiscard}
-          disabled={!hasChanges}
-        >
-          Discard Changes
+    <div className="fixed bottom-0 right-0 left-0 md:left-[calc(64px+208px)] bg-background/80 backdrop-blur-md border-t border-border p-md flex items-center justify-between gap-md z-30 px-lg">
+      {hasChanges ? (
+        <p className="text-sm text-muted-foreground">Unsaved changes</p>
+      ) : (
+        <span />
+      )}
+      <div className="flex gap-md">
+        <Button variant="ghost" onClick={handleDiscard} disabled={!hasChanges}>
+          Discard
         </Button>
         <Button
           variant="default"
-          className="font-label-md px-xl shadow-sm"
+          className="px-xl shadow-sm"
           onClick={handleSave}
-          disabled={
-            !hasChanges || updateProfile.isPending || updateUser.isPending
-          }
+          disabled={!hasChanges || isSaving}
         >
-          {updateProfile.isPending || updateUser.isPending
-            ? "Saving..."
-            : "Save Profile Changes"}
+          {isSaving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </div>

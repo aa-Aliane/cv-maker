@@ -1,21 +1,17 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {
-  Education,
-  WorkExperience,
-  PersonalInfo,
-} from "@/features/cv-builder/types";
+import { Education, Experience, Profile } from "@/features/settings/types";
 import { AuthUser } from "@/features/auth/types";
 
 interface SettingsState {
   user: Partial<AuthUser>;
-  profile: Partial<PersonalInfo>;
+  profile: Partial<Profile>;
   educations: Education[];
-  experiences: WorkExperience[];
+  experiences: Experience[];
   hasChanges: boolean;
 
   // Draft & UI State
-  experienceDrafts: Record<string, WorkExperience>;
+  experienceDrafts: Record<string, Experience>;
   educationDrafts: Record<string, Education>;
   expandedExperienceIds: string[];
   expandedEducationIds: string[];
@@ -23,13 +19,13 @@ interface SettingsState {
   // Basic Actions
   setUser: (user: Partial<AuthUser>) => void;
   setUserField: (field: keyof AuthUser, value: any) => void;
-  setProfile: (profile: Partial<PersonalInfo>) => void;
-  updateProfileField: (field: keyof PersonalInfo, value: any) => void;
+  setProfile: (profile: Partial<Profile>) => void;
+  updateProfileField: (field: keyof Profile, value: any) => void;
 
   // Experience Actions
-  setExperiences: (experiences: WorkExperience[]) => void;
+  setExperiences: (experiences: Experience[]) => void;
   addExperience: () => void;
-  updateExperienceDraft: (id: string, updates: Partial<WorkExperience>) => void;
+  updateExperienceDraft: (id: string, updates: Partial<Experience>) => void;
   confirmExperience: (id: string) => void;
   clearExperience: (id: string) => void;
   toggleExperience: (id: string) => void;
@@ -79,13 +75,14 @@ export const useSettingsStore = create<SettingsState>()(
       setExperiences: (experiences) => set({ experiences, hasChanges: false }),
       addExperience: () => {
         const id = crypto.randomUUID();
-        const newExp: WorkExperience = {
+        const newExp: Experience = {
           id,
           company: "",
           position: "",
           start_date: "",
           is_current: false,
           description: "",
+          bullets: [],
         };
         set((state) => ({
           experienceDrafts: { ...state.experienceDrafts, [id]: newExp },
@@ -114,7 +111,7 @@ export const useSettingsStore = create<SettingsState>()(
             experiences: newExperiences,
             experienceDrafts: remainingDrafts,
             expandedExperienceIds: state.expandedExperienceIds.filter(
-              (eid) => eid !== id
+              (eid) => eid !== id,
             ),
             hasChanges: true,
           };
@@ -126,7 +123,7 @@ export const useSettingsStore = create<SettingsState>()(
           return {
             experienceDrafts: remainingDrafts,
             expandedExperienceIds: state.expandedExperienceIds.filter(
-              (eid) => eid !== id
+              (eid) => eid !== id,
             ),
           };
         }),
@@ -136,7 +133,7 @@ export const useSettingsStore = create<SettingsState>()(
           if (isExpanded) {
             return {
               expandedExperienceIds: state.expandedExperienceIds.filter(
-                (eid) => eid !== id
+                (eid) => eid !== id,
               ),
             };
           } else {
@@ -155,7 +152,7 @@ export const useSettingsStore = create<SettingsState>()(
         set((state) => ({
           experiences: state.experiences.filter((e) => e.id !== id),
           expandedExperienceIds: state.expandedExperienceIds.filter(
-            (eid) => eid !== id
+            (eid) => eid !== id,
           ),
           hasChanges: true,
         })),
@@ -200,7 +197,7 @@ export const useSettingsStore = create<SettingsState>()(
             educations: newEducations,
             educationDrafts: remainingDrafts,
             expandedEducationIds: state.expandedEducationIds.filter(
-              (eid) => eid !== id
+              (eid) => eid !== id,
             ),
             hasChanges: true,
           };
@@ -212,7 +209,7 @@ export const useSettingsStore = create<SettingsState>()(
           return {
             educationDrafts: remainingDrafts,
             expandedEducationIds: state.expandedEducationIds.filter(
-              (eid) => eid !== id
+              (eid) => eid !== id,
             ),
           };
         }),
@@ -222,7 +219,7 @@ export const useSettingsStore = create<SettingsState>()(
           if (isExpanded) {
             return {
               expandedEducationIds: state.expandedEducationIds.filter(
-                (eid) => eid !== id
+                (eid) => eid !== id,
               ),
             };
           } else {
@@ -240,7 +237,7 @@ export const useSettingsStore = create<SettingsState>()(
         set((state) => ({
           educations: state.educations.filter((e) => e.id !== id),
           expandedEducationIds: state.expandedEducationIds.filter(
-            (eid) => eid !== id
+            (eid) => eid !== id,
           ),
           hasChanges: true,
         })),
@@ -258,6 +255,6 @@ export const useSettingsStore = create<SettingsState>()(
         expandedExperienceIds: state.expandedExperienceIds,
         expandedEducationIds: state.expandedEducationIds,
       }),
-    }
-  )
+    },
+  ),
 );
