@@ -10,6 +10,6 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const currentPath = usePathname().slice(1);
-  console.log("aaaaaaaa", currentPath);
+
   return <DashboardShell currentPath={currentPath}>{children}</DashboardShell>;
 }

@@ -38,9 +38,7 @@ export function AcademicBackgroundCard() {
         </div>
 
         <div className="space-y-lg">
-          {allIds.map((id) => (
-            <EducationItem key={id} id={id} />
-          ))}
+          {allIds.map((id) => (id ? <EducationItem key={id} id={id} /> : null))}
           {allIds.length === 0 && (
             <div className="flex flex-col items-center justify-center p-xl bg-primary-container/5 border border-dashed border-primary/20 rounded-xl text-center space-y-md">
               <div className="space-y-xs">

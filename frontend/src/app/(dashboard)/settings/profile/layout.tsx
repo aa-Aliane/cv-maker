@@ -31,6 +31,12 @@ const PROFILE_NAV = [
     icon: GraduationCap,
     description: "Academic background",
   },
+  {
+    label: "academic",
+    href: "/settings/profile/academic",
+    icon: GraduationCap,
+    description: "Academic background",
+  },
 ] as const;
 
 export default function ProfileLayout({
