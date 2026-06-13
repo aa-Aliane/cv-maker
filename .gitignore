@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# FastAPI
+__pycache__/
+*.pyc
+.pytest_cache/
+virt/ # Commonly used virtual environment directory name
+venv/ # Commonly used virtual environment directory name
+.venv/ # Commonly used virtual environment directory name
+
+# FastAPI
+__pycache__/
+*.pyc
+.pytest_cache/
+virt/ # Commonly used virtual environment directory name
+venv/ # Commonly used virtual environment directory name
+.venv/ # Commonly used virtual environment directory name
