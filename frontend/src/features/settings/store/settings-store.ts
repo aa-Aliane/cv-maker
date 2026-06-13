@@ -129,6 +129,7 @@ export const useSettingsStore = create<SettingsState>()(
         }),
       toggleExperience: (id) =>
         set((state) => {
+          if (!id) return state;
           const isExpanded = state.expandedExperienceIds.includes(id);
           if (isExpanded) {
             return {
@@ -215,6 +216,7 @@ export const useSettingsStore = create<SettingsState>()(
         }),
       toggleEducation: (id) =>
         set((state) => {
+          if (!id) return state;
           const isExpanded = state.expandedEducationIds.includes(id);
           if (isExpanded) {
             return {
